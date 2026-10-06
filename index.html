@@ -129,15 +129,17 @@ body{display:flex}
 <div class="log" id="linuxLog" style="display:none;margin-top:6px"></div>
 
 <div style="margin-top:8px;background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:8px">
-<div class="small" style="color:#fff;font-weight:600">GitHub токены (60ч бесплатно на акк, можно много акков)</div>
-<div class="small" style="color:#888">Когда 60ч кончатся на одном - сайт сам переключится на следующий акк. 3 акка = 180ч = почти 24/7 бесплатно!</div>
-<input id="githubPat" placeholder="ghp_... основной токен" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
+<div class="small" style="color:#fff;font-weight:600">🐸 Replit — 1 клик, без адреса, без сна, бесплатно! (РЕКОМЕНДУЮ)</div>
+<div class="small" style="color:#4ade80">Нажми кнопку ниже → Replit импортирует my-agent → нажми Run → скопируй URL → вставь сюда. Никогда не спит!</div>
+<a href="https://replit.com/new/github/heckar904-cmyk/my-agent" target="_blank" style="display:block;text-align:center;background:#f26207;color:#fff;padding:8px;border-radius:8px;text-decoration:none;font-weight:600;font-size:12px;margin:6px 0">▶️ Открыть в Replit (1 клик)</a>
+<div class="small" style="color:#888">Или GitHub токены (60ч на акк, ротация):</div>
+<input id="githubPat" placeholder="ghp_... основной токен (если хочешь GitHub)" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
 <div id="extraPats" style="margin-top:4px"></div>
-<button class="btn2 btn" style="padding:6px;font-size:11px;margin-top:4px" onclick="addPatField()">+ Добавить еще акк (для ротации)</button>
-<input id="codespaceUrl" placeholder="авто-найдет URL" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
-<button class="btn" style="padding:8px;font-size:12px;margin-top:6px" onclick="saveAndAutoSetup()">⚡ Сохранить и настроить всё автоматом</button>
+<button class="btn2 btn" style="padding:6px;font-size:11px;margin-top:4px" onclick="addPatField()">+ Добавить еще GitHub акк</button>
+<input id="codespaceUrl" placeholder="Вставь URL: Replit или Codespace" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
+<div class="small" style="color:#888">Примеры: https://my-agent.username.repl.co или https://xxx-3000.app.github.dev</div>
+<button class="btn" style="padding:8px;font-size:12px;margin-top:6px" onclick="saveAndAutoSetup()">⚡ Сохранить и проверить</button>
 <div class="small" id="patStatus" style="margin-top:4px;color:#4ade80"></div>
-<div class="small" style="margin-top:6px;color:#4ade80">💡 Лайфхак: создай 2-3 GitHub акка, каждый даст 60ч. Когда 1 кончится - сайт сам переключится! А еще есть Oracle Cloud - 4 vCPU 24GB НАВСЕГДА бесплатно, не 60ч а навсегда! И Replit, Gitpod 50ч, Railway, Fly.io</div>
 </div>
 
 <div style="display:flex;gap:4px;margin-top:6px">
