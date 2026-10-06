@@ -80,8 +80,8 @@ body{display:flex}
 <p>Вход как в ChatGPT. Чаты сохраняются.</p>
 <input id="nickInput" placeholder="Ник" value="admin">
 <input id="passInput" type="password" placeholder="Пароль">
-<button class="btn" id="loginBtn">Войти</button>
-<button class="btn btn2" id="guestBtn" style="font-size:13px">Войти как гость</button>
+<button class="btn" id="loginBtn" onclick="doLogin(false)">Войти</button>
+<button class="btn btn2" id="guestBtn" style="font-size:13px" onclick="doLogin(true)">Войти как гость</button>
 <div class="small" id="loginError" style="color:#f55;margin-top:8px;min-height:16px"></div>
 <div class="small" style="margin-top:14px;text-align:left;line-height:1.6">
 Пароль: 0651 или 06510651<br>
@@ -283,13 +283,31 @@ function doLogin(isGuest=false){
 }
 function logout(){ localStorage.removeItem('ok'); localStorage.removeItem('currentUser'); document.getElementById('login').style.display='flex'; document.getElementById('passInput').value=''; }
 
-document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('loginBtn').addEventListener('click',()=>doLogin(false));
-  document.getElementById('guestBtn').addEventListener('click',()=>doLogin(true));
-  document.getElementById('passInput').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(false); });
-  if(localStorage.getItem('ok')==='1' && localStorage.getItem('currentUser')){ currentUser=localStorage.getItem('currentUser'); document.getElementById('login').style.display='none'; initApp(); }
-  document.getElementById('nickInput').value=localStorage.getItem('currentUser')||'admin';
-});
+function attachLogin(){
+  const lb=document.getElementById('loginBtn');
+  const gb=document.getElementById('guestBtn');
+  const pi=document.getElementById('passInput');
+  if(lb) lb.onclick=()=>doLogin(false);
+  if(gb) gb.onclick=()=>doLogin(true);
+  if(pi) pi.onkeydown=(e)=>{ if(e.key==='Enter') doLogin(false); };
+  // Also add inline onclick as fallback
+  if(lb) lb.addEventListener('click',()=>doLogin(false));
+  if(gb) gb.addEventListener('click',()=>doLogin(true));
+  const nickEl=document.getElementById('nickInput');
+  if(nickEl) nickEl.value=localStorage.getItem('currentUser')||'admin';
+  if(localStorage.getItem('ok')==='1' && localStorage.getItem('currentUser')){
+    currentUser=localStorage.getItem('currentUser');
+    document.getElementById('login').style.display='none';
+    initApp();
+  }
+}
+// Attach immediately and also on DOMContentLoaded as fallback
+attachLogin();
+document.addEventListener('DOMContentLoaded',attachLogin);
+window.addEventListener('load',attachLogin);
+// Extra fallback - if still not attached after 1 sec, attach again
+setTimeout(attachLogin, 500);
+setTimeout(attachLogin, 1500);
 
 function toggleSidebar(){
   const sb=document.getElementById('sidebar');
