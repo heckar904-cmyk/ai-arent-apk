@@ -68,13 +68,38 @@ body{display:flex}
 .guest-card{background:#1a221a;border:1px solid #2a4a2a;border-radius:10px;padding:10px;margin:6px 0}
 .switch{display:flex;align-items:center;justify-content:space-between;background:#111;border:1px solid #222;border-radius:8px;padding:10px;margin:4px 0;font-size:13px}
 .mode-tabs{display:flex;gap:6px;margin:8px 0}
-.mode-tab{flex:1;padding:8px;border-radius:8px;background:#111;border:1px solid #222;font-size:12px;text-align:center;cursor:pointer;color:#888}
+.mode-tab{flex:1;padding:10px;border-radius:10px;background:#111;border:1px solid #222;font-size:13px;text-align:center;cursor:pointer;color:#888;touch-action:manipulation}
 .mode-tab.active{background:#fff;color:#000;border-color:#fff;font-weight:600}
 @keyframes fadeIn{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 @keyframes typing{ 0%{opacity:0.3} 50%{opacity:1} 100%{opacity:0.3} }
 .typing span{display:inline-block;width:6px;height:6px;background:#888;border-radius:50%;margin:0 2px;animation:typing 1.2s infinite}
 .typing span:nth-child(2){animation-delay:0.2s}
 .typing span:nth-child(3){animation-delay:0.4s}
+/* Mobile optimization */
+@media (max-width: 768px){
+  #sidebar{width:85vw;max-width:320px;left:-85vw}
+  #sidebar.open{left:0}
+  .chat{padding:12px 8px 16px}
+  .chat-inner{max-width:100%}
+  .bubble{max-width:92%;font-size:15px}
+  .bottom-wrap{padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+  .bottom{border-radius:20px;padding:6px 6px 6px 10px}
+  .icon-btn{width:40px;height:40px}
+  .loginBox{padding:20px;max-width:90vw}
+  .top{height:52px;padding:0 10px}
+  .hamburger{padding:10px 12px;font-size:20px}
+}
+@media (min-width: 769px){
+  .chat{padding:24px}
+  .chat-inner{max-width:760px}
+  .bottom{max-width:760px}
+}
+/* Better touch targets */
+.btn, .btn2, .icon-btn, .hamburger, .chat-item, .mode-tab{ -webkit-tap-highlight-color: transparent; user-select: none; }
+.btn:active, .btn2:active, .icon-btn:active{transform:scale(0.96)}
+/* Scrollbar like ChatGPT */
+.chat::-webkit-scrollbar, .chat-history::-webkit-scrollbar, .drawer-content::-webkit-scrollbar{width:6px}
+.chat::-webkit-scrollbar-thumb, .chat-history::-webkit-scrollbar-thumb, .drawer-content::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
 </style>
 </head>
 <body>
@@ -267,32 +292,71 @@ body{display:flex}
 </div>
 
 <script>
+// Safe JSON parse
+function safeParse(key, fallback){
+  try{
+    const v=localStorage.getItem(key);
+    return v? JSON.parse(v) : fallback;
+  }catch(e){
+    console.log('Parse error for', key, e);
+    localStorage.removeItem(key);
+    return fallback;
+  }
+}
 const PASS_LIST=["0651","06510651"];
-let users=JSON.parse(localStorage.getItem('users')||'{}');
-let pendingGuests=JSON.parse(localStorage.getItem('pendingGuests')||'[]');
-let guestPermissions=JSON.parse(localStorage.getItem('guestPermissions')||'{}');
+let users=safeParse('users',{});
+let pendingGuests=safeParse('pendingGuests',[]);
+let guestPermissions=safeParse('guestPermissions',{});
 let currentUser=localStorage.getItem('currentUser')||null;
 
+console.log('AI Agent loaded, users:', Object.keys(users).length);
+
 function doLogin(isGuest=false){
-  const nick=(document.getElementById('nickInput').value||"admin").trim()||"admin";
-  const pass=(document.getElementById('passInput').value||"").trim();
-  if(isGuest){
-    if(!nick){ document.getElementById('loginError').textContent='Введи ник'; return; }
-    if(users[nick]){ document.getElementById('loginError').textContent='Ник занят'; return; }
-    const req={nick,device:navigator.userAgent.slice(0,60),time:new Date().toLocaleString(),id:Date.now()};
-    pendingGuests.push(req); localStorage.setItem('pendingGuests',JSON.stringify(pendingGuests));
-    document.getElementById('loginError').style.color='#4ade80'; document.getElementById('loginError').textContent='Заявка отправлена админу';
-    let notifs=JSON.parse(localStorage.getItem('adminNotifs')||'[]'); notifs.push({text:`Гость ${nick} хочет войти`,time:req.time}); localStorage.setItem('adminNotifs',JSON.stringify(notifs));
-    renderGuestRequests(); return;
+  console.log('doLogin called', isGuest);
+  try{
+    const nickEl=document.getElementById('nickInput');
+    const passEl=document.getElementById('passInput');
+    const errEl=document.getElementById('loginError');
+    const nick=(nickEl.value||"admin").trim()||"admin";
+    const pass=(passEl.value||"").trim();
+    console.log('nick', nick, 'pass len', pass.length);
+    if(isGuest){
+      if(!nick){ errEl.textContent='Введи ник'; return; }
+      if(users[nick]){ errEl.textContent='Ник занят, выбери другой'; return; }
+      const req={nick,device:navigator.userAgent.slice(0,60),time:new Date().toLocaleString(),id:Date.now()};
+      pendingGuests.push(req); 
+      try{ localStorage.setItem('pendingGuests',JSON.stringify(pendingGuests)); }catch(e){ console.log('save pendingGuests fail', e); }
+      errEl.style.color='#4ade80'; errEl.textContent='Заявка отправлена админу';
+      let notifs=safeParse('adminNotifs',[]); notifs.push({text:`Гость ${nick} хочет войти`,time:req.time}); 
+      try{ localStorage.setItem('adminNotifs',JSON.stringify(notifs)); }catch(e){}
+      renderGuestRequests(); 
+      return;
+    }
+    if(!PASS_LIST.includes(pass)){ 
+      errEl.style.color='#f55'; 
+      errEl.textContent='Неверный пароль! Пароль: 0651 или 06510651'; 
+      console.log('wrong pass', pass);
+      return; 
+    }
+    if(!users[nick]){
+      if(Object.keys(users).length===0){ users[nick]={pass,role:'admin',approved:true,created:Date.now()}; }
+      else if(!guestPermissions[nick]?.approved){ errEl.textContent='Нет такого пользователя. Войди как гость.'; return; }
+      try{ localStorage.setItem('users',JSON.stringify(users)); }catch(e){ console.log('save users fail', e); }
+    }
+    currentUser=nick; 
+    try{
+      localStorage.setItem('currentUser',nick); 
+      localStorage.setItem('ok','1');
+    }catch(e){ console.log('save currentUser fail', e); }
+    document.getElementById('login').style.display='none'; 
+    initApp();
+    console.log('login success', nick);
+  }catch(e){
+    console.error('doLogin error', e);
+    const errEl=document.getElementById('loginError');
+    if(errEl){ errEl.style.color='#f55'; errEl.textContent='Ошибка входа: '+e.message; }
+    alert('Ошибка входа: '+e.message+'\nПопробуй очистить кэш: Настройки браузера → Очистить данные');
   }
-  if(!PASS_LIST.includes(pass)){ document.getElementById('loginError').style.color='#f55'; document.getElementById('loginError').textContent='Неверный пароль'; return; }
-  if(!users[nick]){
-    if(Object.keys(users).length===0){ users[nick]={pass,role:'admin',approved:true,created:Date.now()}; }
-    else if(!guestPermissions[nick]?.approved){ document.getElementById('loginError').textContent='Нет такого пользователя. Войди как гость.'; return; }
-    localStorage.setItem('users',JSON.stringify(users));
-  }
-  currentUser=nick; localStorage.setItem('currentUser',nick); localStorage.setItem('ok','1');
-  document.getElementById('login').style.display='none'; initApp();
 }
 function logout(){ localStorage.removeItem('ok'); localStorage.removeItem('currentUser'); document.getElementById('login').style.display='flex'; document.getElementById('passInput').value=''; }
 
