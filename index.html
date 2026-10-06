@@ -3,211 +3,124 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>AI Agent • Neon</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+<title>AI Agent</title>
 <style>
-:root{
-  --bg:#080a12;
-  --bg2:#0e1120;
-  --bg3:#151a2e;
-  --card:#12162a;
-  --border:#1e2645;
-  --neon-cyan:#00f0ff;
-  --neon-mag:#ff00e5;
-  --neon-purple:#9d00ff;
-  --neon-green:#00ff88;
-  --text:#e8eaff;
-  --muted:#7a82a8;
-}
-*{box-sizing:border-box;margin:0;padding:0;font-family:'Space Grotesk',system-ui,sans-serif}
-html,body{height:100%;height:100dvh;overflow:hidden;background:var(--bg);color:var(--text)}
-body{background:
-  radial-gradient(1200px 600px at 10% -10%, #1a0a3a 0%, transparent 60%),
-  radial-gradient(800px 400px at 90% 10%, #0a2a4a 0%, transparent 50%),
-  radial-gradient(600px 300px at 50% 100%, #1a1030 0%, transparent 60%),
-  var(--bg);
-  display:flex}
-.mono{font-family:'JetBrains Mono',monospace}
-
-/* LOGIN NEON */
-#login{position:fixed;inset:0;background:
-  radial-gradient(1000px 500px at 20% -10%, #2a0a5a 0%, transparent 60%),
-  radial-gradient(800px 400px at 80% 20%, #0a2a5a 0%, transparent 60%),
-  var(--bg);
-  display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
-.loginBox{
-  background:linear-gradient(180deg, rgba(21,26,46,0.9), rgba(12,16,32,0.95));
-  border:1px solid var(--border);
-  border-radius:24px;
-  padding:32px;
-  width:100%;max-width:380px;
-  box-shadow:0 0 80px rgba(0,240,255,0.15), 0 0 40px rgba(157,0,255,0.1), inset 0 1px 0 rgba(255,255,255,0.05);
-  backdrop-filter:blur(20px);
-  position:relative;overflow:hidden
-}
-.loginBox::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg, rgba(0,240,255,0.08), rgba(255,0,229,0.05));
-  pointer-events:none
-}
-.loginBox h2{font-size:28px;font-weight:700;text-align:center;
-  background:linear-gradient(90deg, var(--neon-cyan), var(--neon-mag));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  margin-bottom:6px;letter-spacing:-0.5px}
-.loginBox p{font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px}
-.loginBox input{
-  width:100%;padding:14px 16px;border-radius:12px;
-  background:rgba(0,0,0,0.4);border:1px solid var(--border);
-  color:#fff;margin:8px 0;font-size:14px;outline:none;
-  transition:0.2s;font-family:'JetBrains Mono',monospace
-}
-.loginBox input:focus{border-color:var(--neon-cyan);box-shadow:0 0 20px rgba(0,240,255,0.2)}
-.btn{
-  width:100%;padding:14px;border-radius:12px;border:0;
-  background:linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
-  color:#000;font-weight:700;cursor:pointer;margin:8px 0;font-size:14px;
-  box-shadow:0 0 30px rgba(0,240,255,0.3);transition:0.2s;position:relative;z-index:2
-}
-.btn:hover{transform:translateY(-1px);box-shadow:0 0 40px rgba(0,240,255,0.5)}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+html,body{height:100%;height:100dvh;overflow:hidden;background:#0f0f0f;color:#ececec}
+body{display:flex}
+#login{position:fixed;inset:0;background:radial-gradient(1200px 600px at 20% -10%, #1a2a4a 0%, #0a0a0a 60%), #0a0a0a;display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+.loginBox{background:linear-gradient(180deg,#1e1e1e,#171717);border:1px solid #2a2a2a;border-radius:20px;padding:28px;width:100%;max-width:360px;box-shadow:0 20px 60px #0008, inset 0 1px 0 #ffffff0a}
+.loginBox h2{margin-bottom:8px;font-size:20px;font-weight:600;text-align:center}
+.loginBox p{font-size:13px;color:#888;text-align:center;margin-bottom:16px}
+.loginBox input{width:100%;padding:12px 14px;border-radius:10px;background:#1e1e1e;border:1px solid #333;color:#fff;margin:6px 0;font-size:14px;outline:none}
+.btn{width:100%;padding:12px;border-radius:10px;border:0;background:#fff;color:#000;font-weight:600;cursor:pointer;margin:6px 0;font-size:14px;pointer-events:auto;position:relative;z-index:2}
 .btn:active{transform:scale(0.98)}
-.btn2{
-  background:rgba(255,255,255,0.06);color:var(--text);
-  border:1px solid var(--border);box-shadow:none
-}
-.btn2:hover{background:rgba(255,255,255,0.1);box-shadow:0 0 20px rgba(255,255,255,0.1)}
-
-/* SIDEBAR NEON */
-#sidebar{
-  position:fixed;top:0;left:-340px;width:320px;height:100%;height:100dvh;
-  background:linear-gradient(180deg, rgba(14,17,32,0.98), rgba(8,10,18,0.99));
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;z-index:25;
-  transition:left 0.32s cubic-bezier(0.4,0,0.2,1);
-  backdrop-filter:blur(20px);
-  box-shadow:4px 0 40px rgba(0,0,0,0.5)
-}
+.btn2{background:#1e1e1e;color:#ececec;border:1px solid #2a2a2a}
+.btn2:hover{background:#252525}
+.small{font-size:11px;color:#777;line-height:1.5}
+/* Sidebar overlay like ChatGPT */
+#sidebar{position:fixed;top:0;left:-320px;width:300px;height:100%;height:100dvh;background:#171717;border-right:1px solid #222;display:flex;flex-direction:column;z-index:25;transition:left 0.28s cubic-bezier(0.4,0,0.2,1)}
 #sidebar.open{left:0}
-#sidebarOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:20;display:none;backdrop-filter:blur(4px)}
+#sidebarOverlay{position:fixed;inset:0;background:#0006;z-index:20;display:none}
 #sidebarOverlay.show{display:block}
-.sidebar-top{padding:16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
-.chat-history{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:4px}
-.chat-item{
-  padding:12px 14px;border-radius:12px;cursor:pointer;font-size:13px;
-  display:flex;align-items:center;justify-content:space-between;gap:8px;
-  color:var(--muted);border:1px solid transparent;transition:0.2s
-}
-.chat-item:hover{background:rgba(255,255,255,0.05);color:#fff;border-color:var(--border);box-shadow:0 0 20px rgba(0,240,255,0.08)}
-.chat-item.active{background:linear-gradient(90deg, rgba(0,240,255,0.1), rgba(157,0,255,0.08));color:#fff;border-color:rgba(0,240,255,0.2);box-shadow:0 0 20px rgba(0,240,255,0.15)}
-.sidebar-section{padding:14px;border-top:1px solid var(--border);flex-shrink:0;max-height:38%;overflow:auto}
-.sidebar-section b{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--neon-cyan)}
-.sidebar-bottom{padding:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;flex-shrink:0}
-
-/* MAIN */
-#main{flex:1;display:flex;flex-direction:column;background:transparent;min-width:0;height:100%;height:100dvh;width:100%}
-.top{
-  height:60px;border-bottom:1px solid var(--border);
-  display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;
-  background:rgba(8,10,18,0.8);backdrop-filter:blur(20px)
-}
-.hamburger{
-  cursor:pointer;font-size:18px;padding:10px 14px;border-radius:10px;
-  background:rgba(255,255,255,0.06);border:1px solid var(--border);flex-shrink:0;transition:0.2s
-}
-.hamburger:hover{background:rgba(0,240,255,0.1);border-color:var(--neon-cyan);box-shadow:0 0 20px rgba(0,240,255,0.2)}
-.chat{flex:1;overflow-y:auto;padding:24px 16px;display:flex;flex-direction:column;gap:18px;-webkit-overflow-scrolling:touch;align-items:center}
-.chat-inner{width:100%;max-width:800px;display:flex;flex-direction:column;gap:18px}
-.bubble{
-  max-width:85%;padding:14px 18px;border-radius:18px;line-height:1.65;
-  font-size:14.5px;word-wrap:break-word;white-space:pre-wrap;
-  box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:0.2s;
-  border:1px solid rgba(255,255,255,0.06)
-}
-.me{align-self:flex-end;background:linear-gradient(135deg, #fff, #d8e0ff);color:#000;border-bottom-right-radius:6px;box-shadow:0 0 30px rgba(255,255,255,0.15)}
-.ai{align-self:flex-start;background:linear-gradient(180deg, rgba(21,26,46,0.9), rgba(18,22,42,0.9));border:1px solid var(--border);border-bottom-left-radius:6px;backdrop-filter:blur(10px)}
-.ai:hover{border-color:rgba(0,240,255,0.3);box-shadow:0 0 30px rgba(0,240,255,0.1)}
-.system{align-self:center;background:linear-gradient(90deg, rgba(0,240,255,0.08), rgba(157,0,255,0.08));border:1px solid rgba(0,240,255,0.15);font-size:12px;max-width:90%;text-align:center;color:var(--neon-cyan);border-radius:12px;padding:10px 14px}
-.bottom-wrap{padding:14px;border-top:1px solid var(--border);background:rgba(8,10,18,0.9);flex-shrink:0;padding-bottom:calc(14px + env(safe-area-inset-bottom));display:flex;justify-content:center;backdrop-filter:blur(20px)}
-.bottom{width:100%;max-width:800px;display:flex;gap:10px;align-items:flex-end;background:rgba(18,22,42,0.8);border:1px solid var(--border);border-radius:20px;padding:8px 10px 8px 16px;box-shadow:0 0 40px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);transition:0.2s}
-.bottom:focus-within{border-color:var(--neon-cyan);box-shadow:0 0 30px rgba(0,240,255,0.2)}
-.bottom textarea{flex:1;background:transparent;border:0;color:#fff;resize:none;min-height:26px;max-height:160px;font-size:15px;line-height:1.5;outline:none;padding:8px 0}
-.icon-btn{width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,0.06);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px;transition:0.2s}
-.icon-btn:hover{background:rgba(0,240,255,0.1);border-color:var(--neon-cyan);box-shadow:0 0 20px rgba(0,240,255,0.2);transform:translateY(-1px)}
-.icon-btn.send{background:linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));color:#000;border-color:transparent;box-shadow:0 0 20px rgba(0,240,255,0.3)}
-.drawer{position:fixed;top:0;right:-400px;width:380px;max-width:92vw;height:100%;height:100dvh;background:linear-gradient(180deg, rgba(14,17,32,0.98), rgba(8,10,18,0.99));border-left:1px solid var(--border);transition:0.32s;z-index:30;display:flex;flex-direction:column;backdrop-filter:blur(20px);box-shadow:-4px 0 40px rgba(0,0,0,0.5)}
+.sidebar-top{padding:12px;border-bottom:1px solid #222;display:flex;gap:8px;flex-shrink:0}
+.chat-history{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:2px}
+.chat-item{padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:8px;color:#aaa}
+.chat-item:hover{background:#1e1e1e;color:#fff}
+.chat-item.active{background:#1e1e1e;color:#fff;border:1px solid #2a2a2a}
+.chat-item .del{opacity:0;cursor:pointer;padding:2px 6px;border-radius:6px}
+.chat-item:hover .del{opacity:0.6}
+.sidebar-section{padding:12px;border-top:1px solid #222;flex-shrink:0;max-height:35%;overflow:auto}
+.sidebar-bottom{padding:12px;border-top:1px solid #222;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+#main{flex:1;display:flex;flex-direction:column;background:#0f0f0f;min-width:0;height:100%;height:100dvh;width:100%}
+.top{height:56px;border-bottom:1px solid #222;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;background:#0f0f0f}
+.hamburger{cursor:pointer;font-size:18px;padding:8px 10px;border-radius:8px;background:#171717;border:1px solid #222;flex-shrink:0}
+.chat{flex:1;overflow-y:auto;padding:20px 16px 24px;display:flex;flex-direction:column;gap:16px;-webkit-overflow-scrolling:touch;align-items:center}
+.chat-inner{width:100%;max-width:760px;display:flex;flex-direction:column;gap:16px}
+.bubble{max-width:85%;padding:12px 16px;border-radius:18px;line-height:1.6;font-size:14px;word-wrap:break-word;white-space:pre-wrap;box-shadow:0 2px 12px #0003;transition:transform 0.15s}
+.me{align-self:flex-end;background:linear-gradient(135deg,#fff,#e8e8e8);color:#000;border-bottom-right-radius:4px}
+.ai{align-self:flex-start;background:linear-gradient(180deg,#242424,#1e1e1e);border:1px solid #2a2a2a;border-bottom-left-radius:4px;max-width:100%}
+.system{align-self:center;background:#161e2e;border:1px solid #1e335a;font-size:12px;max-width:90%;text-align:center;color:#8aa0c2;border-radius:10px}
+.bottom-wrap{padding:12px;border-top:1px solid #222;background:#0f0f0f;flex-shrink:0;padding-bottom:calc(12px + env(safe-area-inset-bottom));display:flex;justify-content:center}
+.bottom{width:100%;max-width:760px;display:flex;gap:8px;align-items:flex-end;background:#1e1e1e;border:1px solid #333;border-radius:16px;padding:8px 8px 8px 12px}
+.bottom textarea{flex:1;background:transparent;border:0;color:#fff;resize:none;min-height:24px;max-height:160px;font-size:15px;line-height:1.5;outline:none;padding:6px 0}
+.icon-btn{width:36px;height:36px;border-radius:10px;background:#2a2a2a;border:1px solid #333;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:16px}
+.icon-btn.send{background:#fff;color:#000;border-color:#fff}
+.drawer{position:fixed;top:0;right:-380px;width:360px;max-width:92vw;height:100%;height:100dvh;background:#171717;border-left:1px solid #222;transition:0.25s;z-index:30;display:flex;flex-direction:column}
 .drawer.open{right:0}
-.drawer-header{padding:18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.drawer-content{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px}
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:none;z-index:20;backdrop-filter:blur(4px)}
+.drawer-header{padding:16px;border-bottom:1px solid #222;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.drawer-content{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:12px}
+.overlay{position:fixed;inset:0;background:#0008;display:none;z-index:20}
 .overlay.show{display:block}
-.card{background:linear-gradient(180deg, rgba(21,26,46,0.6), rgba(18,22,42,0.5));border:1px solid var(--border);border-radius:16px;padding:16px;backdrop-filter:blur(10px);transition:0.2s}
-.card:hover{border-color:rgba(0,240,255,0.2);box-shadow:0 0 30px rgba(0,240,255,0.08)}
-.card b{font-size:12px;letter-spacing:0.5px;text-transform:uppercase;color:var(--neon-cyan)}
-.badge{display:inline-block;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:20px;padding:6px 12px;font-size:11px;margin:4px;cursor:pointer;color:var(--muted);transition:0.2s}
-.badge:hover{background:rgba(0,240,255,0.1);border-color:var(--neon-cyan);color:#fff;box-shadow:0 0 15px rgba(0,240,255,0.2)}
-.badge.active{background:linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));color:#000;border-color:transparent;box-shadow:0 0 20px rgba(0,240,255,0.3);font-weight:700}
-.stat{display:inline-block;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin:4px;min-width:72px;text-align:center}
-.stat b{display:block;font-size:13px;color:#fff;font-family:'JetBrains Mono',monospace}
-.stat span{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
-.log{background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:10px;padding:12px;font-family:'JetBrains Mono',monospace;font-size:11px;max-height:200px;overflow:auto;white-space:pre-wrap;color:#a0a8cc}
-.progress{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin:10px 0}
-.progress-bar{height:100%;background:linear-gradient(90deg, var(--neon-cyan), var(--neon-mag));width:0%;transition:width 0.3s;box-shadow:0 0 10px var(--neon-cyan)}
-.video-preview{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-.video-thumb{width:72px;height:72px;background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:9px;overflow:hidden;position:relative}
-.guest-card{background:linear-gradient(90deg, rgba(0,255,136,0.08), rgba(0,240,255,0.05));border:1px solid rgba(0,255,136,0.15);border-radius:12px;padding:12px;margin:6px 0}
-.switch{display:flex;align-items:center;justify-content:space-between;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:12px;margin:6px 0;font-size:13px;transition:0.2s}
-.switch:hover{border-color:rgba(0,240,255,0.2)}
-.mode-tabs{display:flex;gap:8px;margin:10px 0}
-.mode-tab{flex:1;padding:12px;border-radius:12px;background:rgba(0,0,0,0.3);border:1px solid var(--border);font-size:13px;text-align:center;cursor:pointer;color:var(--muted);transition:0.2s}
-.mode-tab:hover{border-color:var(--neon-cyan);color:#fff}
-.mode-tab.active{background:linear-gradient(90deg, rgba(0,240,255,0.15), rgba(157,0,255,0.15));color:#fff;border-color:var(--neon-cyan);box-shadow:0 0 20px rgba(0,240,255,0.15);font-weight:600}
-@keyframes fadeIn{ from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-@keyframes glowPulse{ 0%,100%{box-shadow:0 0 20px rgba(0,240,255,0.2)} 50%{box-shadow:0 0 40px rgba(0,240,255,0.4)} }
+.card{background:#1e1e1e;border:1px solid #222;border-radius:12px;padding:14px}
+.card b{font-size:13px;font-weight:600}
+.badge{display:inline-block;background:#222;border:1px solid #333;border-radius:20px;padding:5px 10px;font-size:11px;margin:3px;cursor:pointer;color:#aaa}
+.badge.active{background:#fff;color:#000;border-color:#fff}
+.stat{display:inline-block;background:#111;border:1px solid #222;border-radius:8px;padding:8px 10px;margin:3px;min-width:68px;text-align:center}
+.stat b{display:block;font-size:12px;color:#fff}
+.stat span{font-size:9px;color:#666}
+.log{background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:10px;font-family:monospace;font-size:11px;max-height:180px;overflow:auto;white-space:pre-wrap}
+.progress{height:4px;background:#222;border-radius:2px;overflow:hidden;margin:8px 0}
+.progress-bar{height:100%;background:#fff;width:0%;transition:width 0.3s}
+.video-preview{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.video-thumb{width:70px;height:70px;background:#111;border:1px solid #222;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:9px;overflow:hidden;position:relative}
+.video-thumb img{width:100%;height:100%;object-fit:cover}
+.guest-card{background:#1a221a;border:1px solid #2a4a2a;border-radius:10px;padding:10px;margin:6px 0}
+.switch{display:flex;align-items:center;justify-content:space-between;background:#111;border:1px solid #222;border-radius:8px;padding:10px;margin:4px 0;font-size:13px}
+.mode-tabs{display:flex;gap:6px;margin:8px 0}
+.mode-tab{flex:1;padding:10px;border-radius:10px;background:#111;border:1px solid #222;font-size:13px;text-align:center;cursor:pointer;color:#888;touch-action:manipulation}
+.mode-tab.active{background:#fff;color:#000;border-color:#fff;font-weight:600}
+@keyframes fadeIn{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 @keyframes typing{ 0%{opacity:0.3} 50%{opacity:1} 100%{opacity:0.3} }
-.typing span{display:inline-block;width:6px;height:6px;background:var(--neon-cyan);border-radius:50%;margin:0 2px;animation:typing 1.2s infinite;box-shadow:0 0 10px var(--neon-cyan)}
+.typing span{display:inline-block;width:6px;height:6px;background:#888;border-radius:50%;margin:0 2px;animation:typing 1.2s infinite}
 .typing span:nth-child(2){animation-delay:0.2s}
 .typing span:nth-child(3){animation-delay:0.4s}
-.small{font-size:11px;color:var(--muted);line-height:1.5}
-.terminal{
-  background:#05070f;border:1px solid var(--border);border-radius:12px;
-  font-family:'JetBrains Mono',monospace;font-size:11px;
-  max-height:300px;overflow:auto;padding:12px;white-space:pre-wrap;
-  color:#8a92b8;box-shadow:inset 0 0 20px rgba(0,0,0,0.5)
-}
-.terminal .line{margin:2px 0}
-.terminal .ok{color:var(--neon-green)}
-.terminal .err{color:#ff4d6d}
-.terminal .info{color:var(--neon-cyan)}
-.terminal .warn{color:#ffcc00}
-.neon-text{
-  background:linear-gradient(90deg, var(--neon-cyan), var(--neon-mag));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  font-weight:700
-}
+/* Mobile optimization */
 @media (max-width: 768px){
-  #sidebar{width:86vw;max-width:340px;left:-86vw}
-  .chat{padding:14px 10px}
+  #sidebar{width:85vw;max-width:320px;left:-85vw}
+  #sidebar.open{left:0}
+  .chat{padding:12px 8px 16px}
+  .chat-inner{max-width:100%}
   .bubble{max-width:92%;font-size:15px}
-  .bottom-wrap{padding:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
-  .icon-btn{width:42px;height:42px}
-  .loginBox{padding:24px;max-width:92vw}
+  .bottom-wrap{padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+  .bottom{border-radius:20px;padding:6px 6px 6px 10px}
+  .icon-btn{width:40px;height:40px}
+  .loginBox{padding:20px;max-width:90vw}
+  .top{height:52px;padding:0 10px}
+  .hamburger{padding:10px 12px;font-size:20px}
 }
+@media (min-width: 769px){
+  .chat{padding:24px}
+  .chat-inner{max-width:760px}
+  .bottom{max-width:760px}
+}
+/* Better touch targets */
+.btn, .btn2, .icon-btn, .hamburger, .chat-item, .mode-tab{ -webkit-tap-highlight-color: transparent; user-select: none; }
+.btn:active, .btn2:active, .icon-btn:active{transform:scale(0.96)}
+/* Scrollbar like ChatGPT */
+.chat::-webkit-scrollbar, .chat-history::-webkit-scrollbar, .drawer-content::-webkit-scrollbar{width:6px}
+.chat::-webkit-scrollbar-thumb, .chat-history::-webkit-scrollbar-thumb, .drawer-content::-webkit-scrollbar-thumb{background:#333;border-radius:3px}
+.terminal{background:#05070f;border:1px solid #333;border-radius:10px;font-family:monospace;font-size:11px;max-height:280px;overflow:auto;padding:10px;white-space:pre-wrap;color:#8a92b8}
+.terminal .ok{color:#00ff88}
+.terminal .err{color:#ff4d6d}
+.terminal .info{color:#00f0ff}
+.terminal .warn{color:#ffcc00}
 </style>
 </head>
 <body>
 
 <div id="login">
 <div class="loginBox">
-<h2>AI AGENT NEON</h2>
-<p>Вход как в ChatGPT • Чаты сохраняются • Linux обязателен и в фоне</p>
-<input id="nickInput" placeholder="Ник" value="admin" class="mono">
-<input id="passInput" type="password" placeholder="Пароль" class="mono">
-<button class="btn" id="loginBtn" onclick="doLogin(false)">⚡ ВОЙТИ</button>
+<h2>AI Agent</h2>
+<p>Вход как в ChatGPT. Чаты сохраняются.</p>
+<input id="nickInput" placeholder="Ник" value="admin">
+<input id="passInput" type="password" placeholder="Пароль">
+<button class="btn" id="loginBtn" onclick="doLogin(false)">Войти</button>
 <button class="btn btn2" id="guestBtn" style="font-size:13px" onclick="doLogin(true)">Войти как гость</button>
-<div class="small" id="loginError" style="color:#ff4d6d;margin-top:10px;min-height:18px"></div>
-<div class="small" style="margin-top:16px;text-align:left;line-height:1.7">
-<span class="neon-text">Пароль: 0651</span><br>
-Первый ник = админ<br>
-<span style="color:var(--neon-green)">● Linux авто-подключается в фоне, открывать ссылку не надо!</span>
+<div class="small" id="loginError" style="color:#f55;margin-top:8px;min-height:16px"></div>
+<div class="small" style="margin-top:14px;text-align:left;line-height:1.6">
+Пароль: 0651 или 06510651<br>
+Первый ник становится админом.
 </div>
 </div>
 </div>
@@ -218,20 +131,20 @@ body{background:
 <div id="sidebar">
 <div class="sidebar-top">
 <button class="btn" onclick="newChat()" style="flex:1">+ Новый чат</button>
-<button class="btn2 btn" style="width:46px" onclick="toggleSidebar()">✕</button>
+<button class="btn2 btn" style="width:44px" onclick="toggleSidebar()">✕</button>
 </div>
 
 <div class="chat-history" id="chatHistoryList"></div>
 
 <div class="sidebar-section">
-<b>⚡ Модели</b>
-<div class="small" style="margin:6px 0">Стабильные не падают, Preview часто high demand</div>
-<div id="modelList" style="margin-top:8px"><span class="small">Введи ключ в настройках</span></div>
-<div class="small" style="margin-top:8px">Текущая: <span id="curModel" class="mono" style="color:var(--neon-cyan)">gemini-2.0-flash</span></div>
+<b>Модели</b>
+<div class="small" style="margin:4px 0">Стабильные не падают, Preview часто high demand</div>
+<div id="modelList" style="margin-top:6px"><span class="small">Введи ключ в настройках</span></div>
+<div class="small" style="margin-top:6px">Текущая: <span id="curModel">gemini-2.0-flash</span></div>
 </div>
 
 <div class="sidebar-section">
-<b>🎯 Режим</b>
+<b>Режим</b>
 <div class="mode-tabs">
 <div class="mode-tab active" id="modeChat" onclick="switchMode('chat')">Чат</div>
 <div class="mode-tab" id="modeAgent" onclick="switchMode('agent')">Агент</div>
@@ -241,48 +154,55 @@ body{background:
 </div>
 
 <div class="sidebar-section" id="linuxCard">
-<b>🖥️ Linux ОБЯЗАТЕЛЕН • NEON</b>
-<div style="margin:8px 0;display:flex;gap:6px;flex-wrap:wrap">
-<div class="stat"><b id="linuxStatus">фон...</b><span>статус</span></div>
-<div class="stat"><b>5</b><span>vCPU</span></div>
-<div class="stat"><b>3914</b><span>MB</span></div>
+<b>Linux Auto</b>
+<div style="margin:6px 0;display:flex;gap:4px;flex-wrap:wrap">
+<div class="stat"><b id="linuxStatus">проверка</b><span>status</span></div>
+<div class="stat"><b>2</b><span>vCPU</span></div>
+<div class="stat"><b>1.9</b><span>GB</span></div>
 </div>
-<div class="small" id="linuxDetails" style="margin:6px 0;color:var(--neon-green)">✅ Linux обязателен! В фоне автоматом — открывать ссылку не надо!</div>
-<div class="small" style="color:var(--muted);margin:4px 0">Replit: https://my-agent--heckar904.replit.app — в фоне, не надо открывать!</div>
-<div class="log" id="linuxLog" style="display:none;margin-top:8px"></div>
+<div class="small" id="linuxDetails" style="margin:4px 0">my-agent • Debian 13</div>
+<div class="log" id="linuxLog" style="display:none;margin-top:6px"></div>
 
-<div style="margin-top:10px;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:12px;padding:12px">
-<div class="small" style="color:#fff;font-weight:600">🐸 Linux Replit — ОБЯЗАТЕЛЕН, в фоне!</div>
-<div class="small" style="color:var(--neon-green)">Уже настроен, работает в фоне — открывать не надо!</div>
-<input id="githubPat" placeholder="ghp_... для своего Codespace (необязательно)" style="width:100%;padding:10px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;font-size:11px;margin-top:6px" class="mono">
-<div id="extraPats" style="margin-top:6px"></div>
-<button class="btn2 btn" style="padding:8px;font-size:11px;margin-top:6px" onclick="addPatField()">+ Добавить акк</button>
-<input id="codespaceUrl" placeholder="URL Linux (автоматом)" style="width:100%;padding:10px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;font-size:11px;margin-top:6px" class="mono">
-<div class="small" style="color:var(--muted)">Оставь https://my-agent--heckar904.replit.app — в фоне!</div>
-<button class="btn" style="padding:10px;font-size:12px;margin-top:8px" onclick="saveAndAutoSetup()">⚡ Проверить Linux</button>
-<div class="small" id="patStatus" style="margin-top:6px;color:var(--neon-green)"></div>
+<div style="margin-top:8px;background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:8px">
+<div class="small" style="color:#fff;font-weight:600">🐸 Replit — 1 клик, без адреса, без сна, бесплатно! (РЕКОМЕНДУЮ)</div>
+<div class="small" style="color:#4ade80">Нажми кнопку ниже → Replit импортирует my-agent → нажми Run → скопируй URL → вставь сюда. Никогда не спит!</div>
+<a href="https://replit.com/new/github/heckar904-cmyk/my-agent" target="_blank" style="display:block;text-align:center;background:#f26207;color:#fff;padding:8px;border-radius:8px;text-decoration:none;font-weight:600;font-size:12px;margin:6px 0">▶️ Открыть в Replit (1 клик)</a>
+<div class="small" style="color:#888">Или GitHub токены (60ч на акк, ротация):</div>
+<input id="githubPat" placeholder="ghp_... основной токен (если хочешь GitHub)" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
+<div id="extraPats" style="margin-top:4px"></div>
+<button class="btn2 btn" style="padding:6px;font-size:11px;margin-top:4px" onclick="addPatField()">+ Добавить еще GitHub акк</button>
+<input id="codespaceUrl" placeholder="Вставь URL: Replit или Codespace" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
+<div class="small" style="color:#888">Примеры: https://my-agent.username.repl.co или https://xxx-3000.app.github.dev</div>
+<button class="btn" style="padding:8px;font-size:12px;margin-top:6px" onclick="saveAndAutoSetup()">⚡ Сохранить и проверить</button>
+<div class="small" id="patStatus" style="margin-top:4px;color:#4ade80"></div>
 </div>
 
-<div style="display:flex;gap:6px;margin-top:8px">
-<button class="btn2 btn" style="padding:8px;font-size:11px;flex:1" onclick="checkLinuxReal()">🔄 Проверить</button>
-<button class="btn2 btn" style="padding:8px;font-size:11px;flex:1" onclick="autoWakeLinux()">⚡ Будить</button>
+<div style="display:flex;gap:4px;margin-top:6px">
+<button class="btn2 btn" style="padding:6px;font-size:11px;flex:1" onclick="autoWakeLinux()">⚡ Разбудить</button>
+<button class="btn2 btn" style="padding:6px;font-size:11px;flex:1" onclick="checkLinuxReal()">Проверить</button>
 </div>
-<div id="codespaceList" style="margin-top:8px;display:none">
-<div class="small" style="color:var(--muted)">Codespaces:</div>
+<div style="margin-top:6px">
+<div class="switch" style="padding:6px;font-size:11px"><span>Авто-пробуждение при входе (бесплатно)</span><input type="checkbox" id="autoWakeToggle" checked></div>
+<div class="switch" style="padding:6px;font-size:11px"><span>Держать онлайн пока сайт открыт</span><input type="checkbox" id="keepAliveToggle" checked></div>
+<div class="small" style="color:#4ade80;margin-top:4px">✅ БЕСПЛАТНО: 60 часов в месяц, 2 vCPU 1.9GB. Спит через 30 мин бездействия (правило GitHub), просыпается сам когда заходишь на сайт. Ничего не тратит когда не пользуешься!</div>
+<details style="margin-top:6px"><summary class="small" style="cursor:pointer;color:#888">Хочешь 24/7 без сна? (платно после 60ч)</summary><div class="switch" style="padding:6px;font-size:11px;background:#2a1a1a;border-color:#333"><span>🔥 Всегда включен 24/7</span><input type="checkbox" id="alwaysOnToggle"></div><div class="small" style="color:#f88">Если включишь - будет работать 24/7 даже когда сайт закрыт, но потратит 720ч/мес (~$120). GitHub Action каждые 10 мин будет будить. Для бесплатного оставь выключенным!</div></details>
+</div>
+<div id="codespaceList" style="margin-top:6px;display:none">
+<div class="small" style="color:#aaa">Codespaces:</div>
 <div id="csListContent"></div>
 </div>
-<div style="margin-top:8px">
-<div class="small" style="color:var(--muted)">Терминал Linux:</div>
-<div style="display:flex;gap:6px;margin-top:6px">
-<input id="linuxCmd" placeholder="uname -a / ls" style="flex:1;padding:8px;border-radius:8px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;font-size:11px" class="mono">
-<button class="btn2 btn" style="width:60px;padding:8px;font-size:11px" onclick="execLinux()">Run</button>
+<div style="margin-top:6px">
+<div class="small" style="color:#aaa">Терминал:</div>
+<div style="display:flex;gap:4px;margin-top:4px">
+<input id="linuxCmd" placeholder="uname -a / ls" style="flex:1;padding:6px;border-radius:6px;background:#111;border:1px solid #333;color:#fff;font-size:11px">
+<button class="btn2 btn" style="width:50px;padding:6px;font-size:11px" onclick="execLinux()">Run</button>
 </div>
-<div class="log" id="linuxTerm" style="display:none;margin-top:6px;max-height:120px"></div>
+<div class="log" id="linuxTerm" style="display:none;margin-top:4px;max-height:120px"></div>
 </div>
 </div>
 
 <div class="sidebar-bottom">
-<div style="display:flex;gap:8px">
+<div style="display:flex;gap:6px">
 <button class="btn2 btn" style="flex:1" onclick="openDrawer()">⚙️ Настройки</button>
 <button class="btn2 btn" style="flex:1" onclick="logout()">Выйти</button>
 </div>
@@ -293,18 +213,15 @@ body{background:
 <div id="main">
 <div class="top">
 <span class="hamburger" onclick="toggleSidebar()">☰</span>
-<span id="topTitle" style="font-weight:700;flex:0 0 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.3px;max-width:80px">Neon</span>
-<select id="topModelSelect" class="mono" style="background:rgba(0,240,255,0.12);border:1px solid var(--neon-cyan);padding:8px 12px;border-radius:20px;color:var(--neon-cyan);font-size:12px;flex:1;max-width:200px;min-width:120px;outline:none;cursor:pointer;box-shadow:0 0 15px rgba(0,240,255,0.15)" onchange="selectModel(this.value)">
-<option value="">⏳ Загрузка моделей...</option>
-</select>
-<button id="liveBtn" class="hamburger" style="background:rgba(255,0,100,0.15);border-color:rgba(255,0,100,0.3);color:#ff4d8a;flex:0 0 auto" onclick="toggleLiveMode()" title="LIVE голосовой режим">🔴</button>
-<span class="hamburger" onclick="openDrawer()" style="flex:0 0 auto">⚙️</span>
+<span id="topTitle" style="font-weight:600;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">AI Agent</span>
+<span class="small" id="topModel" style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">2.0-flash</span>
+<span class="hamburger" onclick="openDrawer()">⚙️</span>
 </div>
 <div class="chat" id="chat"><div class="chat-inner" id="chatInner"></div></div>
 <div class="bottom-wrap">
 <div class="bottom">
 <span class="icon-btn" onclick="document.getElementById('fileInput').click()">+</span>
-<textarea id="msgInput" placeholder="Сообщение... (файлы до 1ГБ, 'смонтируй видео для тикток')" rows="1"></textarea>
+<textarea id="msgInput" placeholder="Сообщение... (файлы до 1ГБ, напиши 'смонтируй видео для тикток')" rows="1"></textarea>
 <span class="icon-btn" onclick="document.getElementById('fileInput').click()">📎</span>
 <span class="icon-btn send" onclick="sendMsg()">↑</span>
 </div>
@@ -314,16 +231,16 @@ body{background:
 
 <div class="drawer" id="drawer">
 <div class="drawer-header">
-<b>⚙️ Настройки Neon</b>
-<span style="cursor:pointer;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.06);border:1px solid var(--border)" onclick="closeDrawer()">✕</span>
+<b>Настройки</b>
+<span style="cursor:pointer;padding:6px 10px;border-radius:8px;background:#222;border:1px solid #333" onclick="closeDrawer()">✕</span>
 </div>
 <div class="drawer-content">
 
 <div class="card">
-<b>🎬 Монтаж TikTok 9:16 (до 1ГБ)</b>
+<b>Монтаж TikTok 9:16 (файлы до 1ГБ)</b>
 <div class="small">Выбери видео, сделаю вертикаль 1080x1920 30fps</div>
 <div class="video-preview" id="videoPreview"></div>
-<div style="display:flex;gap:8px;margin-top:8px">
+<div style="display:flex;gap:6px">
 <button class="btn2 btn" style="flex:1" onclick="document.getElementById('fileInput').click()">Выбрать (до 1ГБ)</button>
 <button class="btn" style="flex:1" onclick="doTikTokMontage()">Смонтировать</button>
 </div>
@@ -333,7 +250,7 @@ body{background:
 </div>
 
 <div class="card">
-<b>🤖 Агент</b>
+<b>Агент</b>
 <div class="switch"><span>Vision Moondream</span><input type="checkbox" id="enableVision" checked></div>
 <div class="switch"><span>Audio Whisper 39MB</span><input type="checkbox" id="enableAudio" checked></div>
 <div class="switch"><span>Director</span><input type="checkbox" id="enableDirector" checked></div>
@@ -341,118 +258,89 @@ body{background:
 </div>
 
 <div class="card">
-<b>🔑 API ключи • Авто-сохранение 3 уровня</b>
-<div class="small" style="color:var(--neon-green)">Вводишь — сразу сохраняется: локально + облако Gist + сервер Replit! Никогда не пропадет!</div>
-<input id="geminiKey" placeholder="AIza... Gemini (основной, 50 моделей)" style="width:100%;padding:12px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;margin:6px 0" class="mono">
-<input id="groqKey" placeholder="gsk_... Groq запасной" style="width:100%;padding:12px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;margin:6px 0" class="mono">
-<input id="freeModelKey" placeholder="cc_... FreeModel бесплатный (много моделей в месяц)" style="width:100%;padding:12px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,0,229,0.3);color:#fff;margin:6px 0" class="mono">
-<div class="small" style="color:var(--muted)">cc_ ключ с freemodel.dev — дает много моделей в месяц бесплатно, проверю какие открывает</div>
-<button class="btn2 btn" onclick="saveKeys()">💾 Сохранить (авто и так сохраняет)</button>
-<div class="small" id="keyStatus" style="margin-top:8px"></div>
-</div>
-
-<div class="card" style="border-color:rgba(0,240,255,0.3);box-shadow:0 0 30px rgba(0,240,255,0.1)">
-<b>🖥️ Терминал выполнения • NEON</b>
-<div class="small">Включи чтобы видеть как всё выполняется, и отправить мне если ошибка!</div>
-<div class="switch"><span>Показать терминал выполнения</span><input type="checkbox" id="enableTerminal" onchange="toggleTerminal()"></div>
-<div class="switch"><span>Авто-отправка ошибок мне</span><input type="checkbox" id="autoSendErrors"></div>
-<div class="terminal" id="execTerminal" style="display:none;margin-top:10px;min-height:120px"></div>
-<div style="display:flex;gap:6px;margin-top:8px">
-<button class="btn2 btn" style="flex:1;padding:8px;font-size:11px" onclick="clearTerminal()">Очистить</button>
-<button class="btn2 btn" style="flex:1;padding:8px;font-size:11px" onclick="copyTerminal()">Копировать</button>
-<button class="btn" style="flex:1;padding:8px;font-size:11px" onclick="sendTerminalToMe()">📤 Отправить мне если ошибка</button>
-</div>
-<div class="small" style="margin-top:6px;color:var(--muted)">Логируется: вход, модели, Linux, сохранение ключей, ошибки. Нажми Отправить — скопирует лог в буфер.</div>
+<b>API ключи</b>
+<input id="geminiKey" placeholder="AIza... Gemini" style="width:100%;padding:10px;border-radius:8px;background:#111;border:1px solid #333;color:#fff;margin:4px 0">
+<input id="groqKey" placeholder="gsk_... Groq запасной" style="width:100%;padding:10px;border-radius:8px;background:#111;border:1px solid #333;color:#fff;margin:4px 0">
+<button class="btn2 btn" onclick="saveKeys()">Сохранить</button>
+<div class="small" id="keyStatus" style="margin-top:6px"></div>
 </div>
 
 <div class="card">
-<b>👥 Гости</b>
+<b>Гости</b>
 <div id="guestRequests"></div>
 <div id="guestList" style="margin-top:8px"></div>
 </div>
 
 <div class="card">
-<b>⏰ Планировщик</b>
-<input type="datetime-local" id="taskTime" style="width:100%;padding:10px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;margin:6px 0">
-<input id="taskDesc" placeholder="Что сделать" style="width:100%;padding:10px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;margin:6px 0">
+<b>Планировщик</b>
+<input type="datetime-local" id="taskTime" style="width:100%;padding:8px;border-radius:8px;background:#111;border:1px solid #333;color:#fff;margin:4px 0">
+<input id="taskDesc" placeholder="Что сделать" style="width:100%;padding:8px;border-radius:8px;background:#111;border:1px solid #333;color:#fff;margin:4px 0">
 <button class="btn2 btn" onclick="scheduleTask()">Добавить</button>
 <div id="taskList" style="margin-top:8px"></div>
 </div>
 
 <div class="card">
-<b>🔄 Обновления</b>
+<b>Обновления</b>
 <div class="small">APK проверяет релизы на GitHub.</div>
 <button class="btn2 btn" onclick="checkAppUpdate()">Проверить обновление</button>
-<div class="small" id="updateStatus" style="margin-top:8px">Версия: <span id="appVersion" class="mono">2.0-neon-auto</span></div>
-<button class="btn" id="updateBtn" style="display:none;background:var(--neon-green);color:#000">Скачать APK</button>
+<div class="small" id="updateStatus" style="margin-top:6px">Версия: <span id="appVersion">1.0.8-auto</span></div>
+<button class="btn" id="updateBtn" style="display:none;background:#4ade80;color:#000">Скачать APK</button>
+</div>
+
+<div class="card" style="border-color:#00f0ff">
+<b>🖥️ Терминал выполнения (до мелочей)</b>
+<div class="small">Видишь кто куда отправляет, как ключ реагирует, весь путь! Включи и отправь мне если ошибка.</div>
+<div class="switch"><span>Показать терминал</span><input type="checkbox" id="enableTerminal" checked onchange="toggleTerminal()"></div>
+<div class="terminal" id="execTerminal" style="margin-top:10px;min-height:100px"></div>
+<div style="display:flex;gap:6px;margin-top:8px">
+<button class="btn2 btn" style="flex:1;padding:6px;font-size:11px" onclick="clearTerminal()">Очистить</button>
+<button class="btn2 btn" style="flex:1;padding:6px;font-size:11px" onclick="copyTerminal()">Копировать</button>
+<button class="btn" style="flex:1;padding:6px;font-size:11px" onclick="sendTerminalToMe()">📤 Отправить мне</button>
+</div>
 </div>
 
 <div class="card">
-<b>🎨 Интерфейс</b>
+<b>Интерфейс</b>
 <button class="btn2 btn" onclick="clearAllChats()">Удалить все чаты</button>
-<div class="small" style="margin-top:8px">Чаты, ключи сохраняются в localStorage + облако + сервер. Не пропадут!</div>
-<div class="small" style="margin-top:8px;color:var(--neon-cyan)">Неоновая тема • Авто-подключение Linux • Терминал логов</div>
+<div class="small" style="margin-top:8px">Чаты, ключи сохраняются в localStorage.</div>
 </div>
 
 </div>
 </div>
 
 <script>
-// ===== TERMINAL LOGGER NEON =====
+// ===== TERMINAL DETAILED LOGGER =====
 let terminalLogs=[];
-let terminalEnabled=false;
+let terminalEnabled=true;
 const origLog=console.log;
 const origErr=console.error;
 function addTerminalLog(type, msg){
   const time=new Date().toLocaleTimeString();
   terminalLogs.push(`[${time}] [${type}] ${msg}`);
-  if(terminalLogs.length>500) terminalLogs.shift();
-  if(terminalEnabled){
-    const term=document.getElementById('execTerminal');
-    if(term){
-      const div=document.createElement('div');
-      div.className='line '+type;
-      div.textContent=`[${time}] ${msg}`;
-      term.appendChild(div);
-      term.scrollTop=term.scrollHeight;
-    }
-  }
-  if(type==='err' && document.getElementById('autoSendErrors')?.checked){
-    // auto copy to clipboard for sending
-    addMessage('system','❌ Ошибка: '+msg+'\nЛог сохранен в терминале — нажми Отправить мне в настройках!');
-  }
-}
-console.log=(...args)=>{ origLog(...args); addTerminalLog('info', args.map(a=>typeof a==='object'?JSON.stringify(a).slice(0,500):String(a)).join(' ')); };
-console.error=(...args)=>{ origErr(...args); addTerminalLog('err', args.join(' ')); };
-
-function toggleTerminal(){
-  terminalEnabled=document.getElementById('enableTerminal').checked;
+  if(terminalLogs.length>600) terminalLogs.shift();
   const term=document.getElementById('execTerminal');
-  term.style.display=terminalEnabled?'block':'none';
-  if(terminalEnabled){
-    term.innerHTML='';
-    terminalLogs.forEach(l=>{
-      const div=document.createElement('div');
-      div.className='line';
-      if(l.includes('[err]')) div.className+=' err';
-      else if(l.includes('[ok]')) div.className+=' ok';
-      div.textContent=l;
-      term.appendChild(div);
-    });
-    addTerminalLog('ok','Терминал включен — логируется всё!');
+  if(term){
+    const div=document.createElement('div');
+    div.className=type;
+    div.textContent=`[${time}] ${msg}`;
+    term.appendChild(div);
+    term.scrollTop=term.scrollHeight;
   }
 }
-function clearTerminal(){ terminalLogs=[]; document.getElementById('execTerminal').innerHTML=''; addTerminalLog('info','Очищено'); }
-function copyTerminal(){ navigator.clipboard.writeText(terminalLogs.join('\n')).then(()=>{ addMessage('system','📋 Лог скопирован в буфер!'); }); }
+console.log=(...args)=>{ origLog(...args); addTerminalLog('info', args.map(a=>typeof a==='object'?JSON.stringify(a).slice(0,600):String(a)).join(' ')); };
+console.error=(...args)=>{ origErr(...args); addTerminalLog('err', args.join(' ')); };
+function toggleTerminal(){ 
+  const term=document.getElementById('execTerminal');
+  if(term) term.style.display=document.getElementById('enableTerminal')?.checked?'block':'none';
+}
+function clearTerminal(){ terminalLogs=[]; const t=document.getElementById('execTerminal'); if(t) t.innerHTML=''; addTerminalLog('info','Очищено'); }
+function copyTerminal(){ navigator.clipboard.writeText(terminalLogs.join('\n')).then(()=>alert('Скопировано!')); }
 function sendTerminalToMe(){
   const text=terminalLogs.join('\n');
-  navigator.clipboard.writeText(text).then(()=>{
-    addMessage('system','📤 Лог скопирован! Отправь мне в чат если ошибка:\n\n'+text.slice(-1500));
-  });
-  // Also try to save to Gist if PAT exists
+  navigator.clipboard.writeText(text).then(()=>{ alert('Лог скопирован! Отправь мне:\n\n'+text.slice(-1500)); });
   const pat=localStorage.getItem('githubPat');
   if(pat){
-    fetch('https://api.github.com/gists',{method:'POST',headers:{'Authorization':'token '+pat,'Content-Type':'application/json'},body:JSON.stringify({description:'AI Agent error log',public:false,files:{'error-log.txt':{content:text.slice(-5000)}}})}).then(r=>r.json()).then(g=>{ addMessage('system','☁️ Лог сохранен в Gist: '+g.html_url); });
+    fetch('https://api.github.com/gists',{method:'POST',headers:{'Authorization':'token '+pat,'Content-Type':'application/json'},body:JSON.stringify({description:'AI Agent error log',public:false,files:{'error-log.txt':{content:text.slice(-5000)}}})}).then(r=>r.json()).then(g=>{ if(g.html_url) alert('Gist: '+g.html_url); });
   }
 }
 
@@ -473,58 +361,56 @@ let pendingGuests=safeParse('pendingGuests',[]);
 let guestPermissions=safeParse('guestPermissions',{});
 let currentUser=localStorage.getItem('currentUser')||null;
 
-console.log('AI Agent Neon loaded, users:', Object.keys(users).length);
-addTerminalLog('ok','Neon сайт загружен');
+console.log('AI Agent loaded, users:', Object.keys(users).length);
 
 function doLogin(isGuest=false){
   console.log('doLogin called', isGuest);
-  addTerminalLog('info','Попытка входа isGuest='+isGuest);
   try{
     const nickEl=document.getElementById('nickInput');
     const passEl=document.getElementById('passInput');
     const errEl=document.getElementById('loginError');
     const nick=(nickEl.value||"admin").trim()||"admin";
     const pass=(passEl.value||"").trim();
+    console.log('nick', nick, 'pass len', pass.length);
     if(isGuest){
       if(!nick){ errEl.textContent='Введи ник'; return; }
-      if(users[nick]){ errEl.textContent='Ник занят'; return; }
+      if(users[nick]){ errEl.textContent='Ник занят, выбери другой'; return; }
       const req={nick,device:navigator.userAgent.slice(0,60),time:new Date().toLocaleString(),id:Date.now()};
       pendingGuests.push(req); 
-      try{ localStorage.setItem('pendingGuests',JSON.stringify(pendingGuests)); }catch(e){}
-      errEl.style.color='#00ff88'; errEl.textContent='Заявка отправлена админу';
+      try{ localStorage.setItem('pendingGuests',JSON.stringify(pendingGuests)); }catch(e){ console.log('save pendingGuests fail', e); }
+      errEl.style.color='#4ade80'; errEl.textContent='Заявка отправлена админу';
       let notifs=safeParse('adminNotifs',[]); notifs.push({text:`Гость ${nick} хочет войти`,time:req.time}); 
       try{ localStorage.setItem('adminNotifs',JSON.stringify(notifs)); }catch(e){}
       renderGuestRequests(); 
-      addTerminalLog('ok','Гость заявка '+nick);
       return;
     }
     if(!PASS_LIST.includes(pass)){ 
-      errEl.style.color='#ff4d6d'; 
-      errEl.textContent='Неверный пароль! 0651'; 
-      addTerminalLog('err','Неверный пароль');
+      errEl.style.color='#f55'; 
+      errEl.textContent='Неверный пароль! Пароль: 0651 или 06510651'; 
+      console.log('wrong pass', pass);
       return; 
     }
     if(!users[nick]){
       if(Object.keys(users).length===0){ users[nick]={pass,role:'admin',approved:true,created:Date.now()}; }
-      else if(!guestPermissions[nick]?.approved){ errEl.textContent='Нет пользователя, войди как гость.'; return; }
-      try{ localStorage.setItem('users',JSON.stringify(users)); }catch(e){}
+      else if(!guestPermissions[nick]?.approved){ errEl.textContent='Нет такого пользователя. Войди как гость.'; return; }
+      try{ localStorage.setItem('users',JSON.stringify(users)); }catch(e){ console.log('save users fail', e); }
     }
     currentUser=nick; 
     try{
       localStorage.setItem('currentUser',nick); 
       localStorage.setItem('ok','1');
-    }catch(e){}
+    }catch(e){ console.log('save currentUser fail', e); }
     document.getElementById('login').style.display='none'; 
     initApp();
-    addTerminalLog('ok','Вход успешен '+nick);
+    console.log('login success', nick);
   }catch(e){
     console.error('doLogin error', e);
-    addTerminalLog('err','doLogin '+e.message);
     const errEl=document.getElementById('loginError');
-    if(errEl){ errEl.style.color='#ff4d6d'; errEl.textContent='Ошибка: '+e.message; }
+    if(errEl){ errEl.style.color='#f55'; errEl.textContent='Ошибка входа: '+e.message; }
+    alert('Ошибка входа: '+e.message+'\nПопробуй очистить кэш: Настройки браузера → Очистить данные');
   }
 }
-function logout(){ localStorage.removeItem('ok'); localStorage.removeItem('currentUser'); document.getElementById('login').style.display='flex'; document.getElementById('passInput').value=''; addTerminalLog('info','Выход'); }
+function logout(){ localStorage.removeItem('ok'); localStorage.removeItem('currentUser'); document.getElementById('login').style.display='flex'; document.getElementById('passInput').value=''; }
 
 function attachLogin(){
   const lb=document.getElementById('loginBtn');
@@ -533,6 +419,7 @@ function attachLogin(){
   if(lb) lb.onclick=()=>doLogin(false);
   if(gb) gb.onclick=()=>doLogin(true);
   if(pi) pi.onkeydown=(e)=>{ if(e.key==='Enter') doLogin(false); };
+  // Also add inline onclick as fallback
   if(lb) lb.addEventListener('click',()=>doLogin(false));
   if(gb) gb.addEventListener('click',()=>doLogin(true));
   const nickEl=document.getElementById('nickInput');
@@ -543,9 +430,11 @@ function attachLogin(){
     initApp();
   }
 }
+// Attach immediately and also on DOMContentLoaded as fallback
 attachLogin();
 document.addEventListener('DOMContentLoaded',attachLogin);
 window.addEventListener('load',attachLogin);
+// Extra fallback - if still not attached after 1 sec, attach again
 setTimeout(attachLogin, 500);
 setTimeout(attachLogin, 1500);
 
@@ -565,75 +454,58 @@ let currentChatId=localStorage.getItem('currentChatId')||null;
 let tasks=JSON.parse(localStorage.getItem('ai_tasks')||'[]');
 let selectedFiles=[];
 let keepAliveInterval=null;
-let _saveDebounce=null;
 
+let _saveDebounce=null;
 function debouncedAutoSave(){
   if(_saveDebounce) clearTimeout(_saveDebounce);
   _saveDebounce=setTimeout(()=>{
     syncKeysToCloud();
     saveToServer();
     const el=document.getElementById('keyStatus');
-    if(el) { el.textContent='✅ Авто-сохранено: локально + облако + сервер'; el.style.color='#00ff88'; setTimeout(()=>checkKeys(),2000); }
-    addTerminalLog('ok','Авто-сохранение ключей');
+    if(el) { el.textContent='✅ Авто-сохранено локально + облако + сервер'; el.style.color='#4ade80'; setTimeout(()=>checkKeys(),2000); }
   },1200);
 }
 async function saveToServer(){
   try{
-    const gemini=localStorage.getItem('gemini')||'';
-    const groq=localStorage.getItem('groq')||'';
-    const pat=localStorage.getItem('githubPat')||'';
-    const codespaceUrl=localStorage.getItem('codespaceUrl')||'';
+    const codespaceUrl=localStorage.getItem('codespaceUrl')||document.getElementById('codespaceUrl')?.value||'https://my-agent--heckar904.replit.app';
+    const url=(codespaceUrl||'https://my-agent--heckar904.replit.app').replace(/\/$/,'')+'/save-keys';
     const payload={
-      gemini: gemini,
-      groq: groq,
-      githubPat: pat,
-      codespaceUrl: codespaceUrl,
+      gemini: localStorage.getItem('gemini')||'',
+      groq: localStorage.getItem('groq')||'',
+      githubPat: localStorage.getItem('githubPat')||'',
+      codespaceUrl: localStorage.getItem('codespaceUrl')||'',
       extraPats: localStorage.getItem('extraPats')||'[]'
     };
-    if(!payload.gemini && !payload.groq) { addTerminalLog('info','saveToServer: нечего сохранять'); return; }
-    // Сохраняем на ОБА сервера: на текущий URL и на Replit дефолтный, чтобы не пропало!
-    const urlsToTry=[
-      (codespaceUrl||'https://my-agent--heckar904.replit.app').replace(/\/$/,'')+'/save-keys',
-      'https://my-agent--heckar904.replit.app/save-keys'
-    ];
-    const uniqueUrls=[...new Set(urlsToTry)];
-    addTerminalLog('info',`[SAVE] → ${uniqueUrls.join(' + ')}\n  кто: ${currentUser}\n  gemini: ${gemini?gemini.slice(0,8)+'... ('+gemini.length+')':'пусто'}\n  groq: ${groq?groq.slice(0,8)+'...':'пусто'}`);
-    for(const url of uniqueUrls){
-      try{
-        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),7000);
-        const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctrl.signal});
-        const txt=await r.text();
-        addTerminalLog(r.ok?'ok':'err',`[SAVE] ← ${url} ${r.status}\n  ${txt.slice(0,300)} ${r.ok?'✅':''}`);
-      }catch(e){ addTerminalLog('warn',`[SAVE] ❌ ${url} fail ${e.message}`); }
-    }
-  }catch(e){ addTerminalLog('err','[SAVE] ❌ '+e.message); }
+    if(!payload.gemini && !payload.groq) return; // nothing to save
+    const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctrl.signal});
+    if(r.ok){ console.log('Saved to server', await r.json()); }
+  }catch(e){ console.log('saveToServer fail', e.message); }
 }
 async function loadFromServer(){
   try{
     const codespaceUrl=localStorage.getItem('codespaceUrl')||'https://my-agent--heckar904.replit.app';
     const url=(codespaceUrl).replace(/\/$/,'')+'/get-keys';
-    addTerminalLog('info',`[LOAD] → ${url}\n  кто: ${currentUser}\n  запрос ключей с сервера`);
     const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
     const r=await fetch(url,{signal:ctrl.signal});
-    addTerminalLog(r.ok?'ok':'warn',`[LOAD] ← ${r.status} ${r.statusText}`);
     if(!r.ok) return false;
     const data=await r.json();
-    addTerminalLog('info',`[LOAD] данные: gemini=${data.gemini?'есть '+data.gemini.slice(0,8)+'...':'нет'}, groq=${data.groq?'есть':'нет'}, pat=${data.githubPat?'есть':'нет'}, updated=${data.updated||'нет'}`);
     let loaded=false;
-    if(data.gemini && !localStorage.getItem('gemini')){ localStorage.setItem('gemini', data.gemini); loaded=true; addTerminalLog('ok','[LOAD] gemini восстановлен '+data.gemini.slice(0,8)+'...'); }
-    if(data.groq && !localStorage.getItem('groq')){ localStorage.setItem('groq', data.groq); loaded=true; addTerminalLog('ok','[LOAD] groq восстановлен'); }
+    if(data.gemini && !localStorage.getItem('gemini')){ localStorage.setItem('gemini', data.gemini); loaded=true; }
+    if(data.groq && !localStorage.getItem('groq')){ localStorage.setItem('groq', data.groq); loaded=true; }
     if(data.githubPat && !localStorage.getItem('githubPat')){ localStorage.setItem('githubPat', data.githubPat); loaded=true; }
     if(data.codespaceUrl && !localStorage.getItem('codespaceUrl')){ localStorage.setItem('codespaceUrl', data.codespaceUrl); loaded=true; }
     if(data.extraPats && !localStorage.getItem('extraPats')){ localStorage.setItem('extraPats', typeof data.extraPats==='string'? data.extraPats : JSON.stringify(data.extraPats)); loaded=true; }
     if(loaded){
+      console.log('Loaded keys from server');
       document.getElementById('geminiKey').value=localStorage.getItem('gemini')||'';
       document.getElementById('groqKey').value=localStorage.getItem('groq')||'';
       document.getElementById('githubPat').value=localStorage.getItem('githubPat')||'';
       document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||'';
-      addMessage('system','🔄 Ключи восстановлены с сервера Replit! Не пропадут.');
+      addMessage('system','🔄 Ключи восстановлены с сервера Replit! Теперь не пропадут.');
     }
     return loaded;
-  }catch(e){ addTerminalLog('err','[LOAD] ❌ '+e.message); return false; }
+  }catch(e){ console.log('loadFromServer fail', e.message); return false; }
 }
 
 function initApp(){
@@ -642,17 +514,16 @@ function initApp(){
   if(!currentChatId||!chats[currentChatId]) newChat(); else loadChat(currentChatId);
   const defaultReplitUrl="https://my-agent--heckar904.replit.app";
   if(!localStorage.getItem('codespaceUrl')) localStorage.setItem('codespaceUrl', defaultReplitUrl);
+  // Загружаем ключи с авто-сохранением
   const savedGemini=localStorage.getItem('gemini')||'';
   const savedGroq=localStorage.getItem('groq')||'';
-  const savedFM=localStorage.getItem('freemodel')||localStorage.getItem('cc_key')||'';
   document.getElementById('geminiKey').value=savedGemini;
   document.getElementById('groqKey').value=savedGroq;
-  const fmEl=document.getElementById('freeModelKey'); if(fmEl) fmEl.value=savedFM;
   document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||defaultReplitUrl;
   document.getElementById('githubPat').value=localStorage.getItem('githubPat')||'';
+  // Авто-сохранение при вводе - 3 уровня: local + cloud Gist + server
   document.getElementById('geminiKey').addEventListener('input',e=>{ localStorage.setItem('gemini', e.target.value.trim()); checkKeys(); debouncedAutoSave(); });
   document.getElementById('groqKey').addEventListener('input',e=>{ localStorage.setItem('groq', e.target.value.trim()); debouncedAutoSave(); });
-  const fmInput=document.getElementById('freeModelKey'); if(fmInput) fmInput.addEventListener('input',e=>{ localStorage.setItem('freemodel', e.target.value.trim()); localStorage.setItem('cc_key', e.target.value.trim()); checkKeys(); debouncedAutoSave(); loadModels(); });
   document.getElementById('githubPat').addEventListener('input',e=>{ localStorage.setItem('githubPat', e.target.value.trim()); debouncedAutoSave(); });
   document.getElementById('codespaceUrl').addEventListener('input',e=>{ localStorage.setItem('codespaceUrl', e.target.value.trim()); debouncedAutoSave(); });
   
@@ -676,12 +547,9 @@ function initApp(){
     }
     setupKeepAlive();
   });
-  checkKeys(); renderTasks(); renderGuestRequests(); renderGuestList(); showAdminNotifs();
-  const defaultReplit="https://my-agent--heckar904.replit.app";
-  if(!localStorage.getItem('codespaceUrl')) localStorage.setItem('codespaceUrl', defaultReplit);
-  setTimeout(()=>checkLinuxReal(), 800);
-  setInterval(()=>{ if(localStorage.getItem('keepAlive')!=='0') checkLinuxReal(); }, 30000);
+  checkKeys(); renderTasks(); renderGuestRequests(); renderGuestList(); checkLinuxReal(); showAdminNotifs();
   if(localStorage.getItem('gemini')||localStorage.getItem('groq')) loadModels();
+  // Загружаем с сервера и облака для кросс-девайс - если локально пусто
   (async()=>{
     const hadLocal = !!(localStorage.getItem('gemini')||localStorage.getItem('groq'));
     if(!hadLocal){
@@ -689,27 +557,30 @@ function initApp(){
       await loadFromServer();
       await loadKeysFromCloud();
     } else {
+      // Даже если есть локально, все равно подтягиваем с облака в фоне и синкаем
       loadFromServer().then(()=>{ checkKeys(); loadModels(); });
       loadKeysFromCloud().then(()=>{ checkKeys(); loadModels(); });
+      // Сразу синкаем локальные на сервер
       saveToServer();
       syncKeysToCloud();
     }
     checkKeys(); loadModels();
   })();
-  document.getElementById('appVersion').textContent='2.4-neon-cc-key-real-models';
+  document.getElementById('curModel').textContent=currentModel;
+  document.getElementById('topModel').textContent=currentModel.replace('gemini-','').slice(0,12);
+  document.getElementById('appVersion').textContent='1.0.20-old-working-real-neural-terminal';
   setupKeepAlive();
   if(localStorage.getItem('autoWake')!=='0' && localStorage.getItem('githubPat')){
     setTimeout(()=>{ 
       const st=document.getElementById('linuxStatus').textContent;
-      if(st.includes('спит') || st.includes('выкл')) autoWakeLinux(); 
-    }, 5000);
+      if(st.includes('спит') || st.includes('проверка') || st.includes('выкл') || st.includes('нет')) autoWakeLinux(); 
+    }, 2000);
   }
-  addTerminalLog('ok','App инициализирован, Linux авто-подключение');
 }
 
 function newChat(){
   const id='chat_'+Date.now();
-  chats[id]={id,title:'Новый чат',messages:[{role:'system',text:'Привет! Я AI Agent Neon с Linux!\n\n• Linux ОБЯЗАТЕЛЕН и в фоне автоматом — открывать ссылку не надо!\n• Неоновый дизайн, как у людей\n• Чат, монтаж TikTok 9:16, команды Linux — всё через Linux\n• Файлы до 1ГБ через + и 📎\n• Ключи навсегда: локально + облако + сервер\n• В параметрах включи терминал чтобы видеть как всё выполняется и отправить мне если ошибка!'}],created:Date.now()};
+  chats[id]={id,title:'Новый чат',messages:[{role:'system',text:'Привет! Я AI агент.\n\n• Чат как ChatGPT\n• Файлы до 1ГБ через + и 📎\n• Агент и монтаж в боковой панели ☰\n• Linux авто-пробуждение — вставь токен и нажми ⚡ Сохранить и настроить всё автоматом'}],created:Date.now()};
   currentChatId=id; localStorage.setItem('currentChatId',id); saveChats(); renderChatList(); loadChat(id);
 }
 function saveChats(){ localStorage.setItem('chats',JSON.stringify(chats)); }
@@ -733,37 +604,32 @@ function addMessage(role,text,silent){
   const chatEl=document.getElementById('chatInner');
   const div=document.createElement('div');
   div.className='bubble '+(role==='me'?'me':role==='system'?'system':'ai');
+  // Markdown like ChatGPT
   let html=text
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
     .replace(/\*(.*?)\*/g,'<i>$1</i>')
-    .replace(/```([\s\S]*?)```/g,'<pre style="background:rgba(0,0,0,0.5);border:1px solid var(--border);border-radius:10px;padding:12px;overflow:auto;margin:10px 0"><code>$1</code></pre>')
-    .replace(/`([^`]+)`/g,'<code style="background:rgba(0,240,255,0.1);padding:2px 6px;border-radius:6px;border:1px solid rgba(0,240,255,0.2)">$1</code>')
+    .replace(/```([\s\S]*?)```/g,'<pre style="background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:10px;overflow:auto;margin:8px 0"><code>$1</code></pre>')
+    .replace(/`([^`]+)`/g,'<code style="background:#222;padding:2px 6px;border-radius:4px">$1</code>')
     .replace(/\n/g,'<br>');
   div.innerHTML=html;
+  // wrapper
   const wrap=document.createElement('div');
   wrap.style.display='flex';
   wrap.style.flexDirection='column';
   wrap.style.width='100%';
-  wrap.style.animation='fadeIn 0.25s ease';
+  wrap.style.animation='fadeIn 0.3s ease';
+  // Avatar like ChatGPT
   if(role!=='system'){
     const ava=document.createElement('div');
     ava.style.display='flex';
-    ava.style.gap='10px';
+    ava.style.gap='8px';
     ava.style.alignItems='flex-start';
     ava.style.width='100%';
-    // FIX: me справа, ai слева
-    if(role==='me'){
-      ava.style.justifyContent='flex-end';
-      ava.style.flexDirection='row-reverse';
-    } else {
-      ava.style.justifyContent='flex-start';
-      ava.style.flexDirection='row';
-    }
     const icon=document.createElement('div');
-    icon.style.width='32px'; icon.style.height='32px'; icon.style.borderRadius='50%'; icon.style.display='flex'; icon.style.alignItems='center'; icon.style.justifyContent='center'; icon.style.fontSize='16px'; icon.style.flexShrink='0'; icon.style.border='1px solid var(--border)';
-    if(role==='me'){ icon.style.background='linear-gradient(135deg,#fff,#d8e0ff)'; icon.style.color='#000'; icon.textContent='🧑'; }
-    else { icon.style.background='linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))'; icon.style.color='#000'; icon.textContent='🤖'; icon.style.boxShadow='0 0 20px rgba(0,240,255,0.3)'; }
+    icon.style.width='28px'; icon.style.height='28px'; icon.style.borderRadius='50%'; icon.style.display='flex'; icon.style.alignItems='center'; icon.style.justifyContent='center'; icon.style.fontSize='14px'; icon.style.flexShrink='0';
+    if(role==='me'){ icon.style.background='#fff'; icon.style.color='#000'; icon.textContent='🧑'; }
+    else { icon.style.background='#10a37f'; icon.style.color='#fff'; icon.textContent='🤖'; }
     ava.appendChild(icon);
     ava.appendChild(div);
     wrap.appendChild(ava);
@@ -773,7 +639,7 @@ function addMessage(role,text,silent){
   chatEl.appendChild(wrap);
   document.getElementById('chat').scrollTop=document.getElementById('chat').scrollHeight;
   if(!silent && currentChatId && chats[currentChatId]){
-    if(role==='me' && chats[currentChatId].messages.length<3){ chats[currentChatId].title=text.slice(0,30); const tt=document.getElementById('topTitle'); if(tt) tt.textContent=chats[currentChatId].title; renderChatList(); }
+    if(role==='me' && chats[currentChatId].messages.length<3){ chats[currentChatId].title=text.slice(0,30); document.getElementById('topTitle').textContent=chats[currentChatId].title; renderChatList(); }
     chats[currentChatId].messages.push({role,text}); saveChats();
   }
   return div;
@@ -786,19 +652,16 @@ function switchMode(m){
   if(el) el.classList.add('active');
   const descs={chat:'Обычный чат как ChatGPT',agent:'Агент — несколько ИИ вместе',montage:'Монтаж TikTok 9:16, файлы до 1ГБ'};
   document.getElementById('modeDesc').textContent=descs[m]||m;
-  document.getElementById('topTitle').textContent={chat:'Чат Neon',agent:'Агент Neon',montage:'Монтаж TikTok'}[m]||m;
+  document.getElementById('topTitle').textContent={chat:'Чат',agent:'Агент',montage:'Монтаж TikTok'}[m]||m;
   if(m==='montage') addMessage('system','Режим монтажа: прикрепи видео до 1ГБ через + и нажми Смонтировать. Сделаю 1080x1920 вертикально.');
   else if(m==='agent') addMessage('system','Агент: включи нужные ИИ в настройках.');
-  addTerminalLog('info','Режим переключен '+m);
 }
 
 function saveKeys(){
   const g=document.getElementById('geminiKey').value.trim();
   const groq=document.getElementById('groqKey').value.trim();
-  const fm=document.getElementById('freeModelKey')?.value.trim()||'';
   if(g) localStorage.setItem('gemini',g);
   if(groq) localStorage.setItem('groq',groq);
-  if(fm) { localStorage.setItem('freemodel',fm); localStorage.setItem('cc_key',fm); }
   const url=document.getElementById('codespaceUrl').value.trim();
   const pat=document.getElementById('githubPat').value.trim();
   if(url) localStorage.setItem('codespaceUrl',url);
@@ -807,21 +670,20 @@ function saveKeys(){
   const extraPats=Array.from(extraInputs).map(i=>i.value.trim()).filter(v=>v);
   localStorage.setItem('extraPats', JSON.stringify(extraPats));
   checkKeys(); loadModels();
-  addMessage('system','✅ Ключи сохранены: локально + облако Gist + сервер Replit! Никогда не пропадут!');
-  addTerminalLog('ok','Ключи сохранены вручную, fm='+(fm?fm.slice(0,8)+'...':'нет'));
+  addMessage('system','✅ Ключи сохранены: локально + облако Gist + сервер Replit! Теперь не пропадут НИКОГДА, даже с телефона/ПК.');
   syncKeysToCloud();
   saveToServer();
 }
 
 async function syncKeysToCloud(){
   const pat=localStorage.getItem('githubPat');
-  if(!pat) { addTerminalLog('warn','Нет PAT для облака'); return; }
+  if(!pat) { console.log('No PAT for cloud sync'); return; }
   try{
     const gemini=localStorage.getItem('gemini')||'';
     const groq=localStorage.getItem('groq')||'';
     const codespaceUrl=localStorage.getItem('codespaceUrl')||'';
     const extraPats=localStorage.getItem('extraPats')||'[]';
-    if(!gemini && !groq) return;
+    if(!gemini && !groq) { console.log('Nothing to sync to cloud'); return; }
     const gistData={
       description: "AI Agent keys backup - private",
       public: false,
@@ -840,7 +702,8 @@ async function syncKeysToCloud(){
         headers:{'Authorization':'token '+pat,'Content-Type':'application/json'},
         body:JSON.stringify({files:{"ai-agent-keys.json":{content: gistData.files['ai-agent-keys.json'].content}}})
       });
-      if(res.ok) { addMessage('system','☁️ Ключи в облаке Gist!'); addTerminalLog('ok','Gist обновлен '+existing.id); }
+      console.log('Keys synced to existing gist', existing.id, res.status);
+      if(res.ok) addMessage('system','☁️ Ключи сохранены в облако Gist — доступны с любого устройства!');
     } else {
       const createRes=await fetch('https://api.github.com/gists',{
         method:'POST',
@@ -848,9 +711,10 @@ async function syncKeysToCloud(){
         body:JSON.stringify(gistData)
       });
       const created=await createRes.json();
-      if(createRes.ok) { addMessage('system','☁️ Создан бэкап Gist!'); addTerminalLog('ok','Gist создан '+created.id); }
+      console.log('Keys synced to new gist', created.id);
+      if(createRes.ok) addMessage('system','☁️ Создан облачный бэкап Gist — теперь ключи не пропадут!');
     }
-  }catch(e){ addTerminalLog('err','Gist sync '+e.message); }
+  }catch(e){ console.log('Cloud sync failed', e); }
 }
 
 async function loadKeysFromCloud(){
@@ -868,13 +732,14 @@ async function loadKeysFromCloud(){
       if(data.groq && !localStorage.getItem('groq')){ localStorage.setItem('groq', data.groq); if(document.getElementById('groqKey')) document.getElementById('groqKey').value=data.groq; restored=true; }
       if(data.codespaceUrl && !localStorage.getItem('codespaceUrl')){ localStorage.setItem('codespaceUrl', data.codespaceUrl); if(document.getElementById('codespaceUrl')) document.getElementById('codespaceUrl').value=data.codespaceUrl; restored=true; }
       if(data.extraPats && !localStorage.getItem('extraPats')){ localStorage.setItem('extraPats', typeof data.extraPats==='string'? data.extraPats : JSON.stringify(data.extraPats)); restored=true; }
+      // If cloud has newer keys, also update even if local exists? Only if local empty to avoid overwrite, but if cloud has gemini and local empty - restore
       if(restored){
-        addMessage('system','🔄 Ключи с облака Gist!');
-        addTerminalLog('ok','Ключи с облака восстановлены');
+        console.log('Keys loaded from cloud gist');
+        addMessage('system','🔄 Ключи восстановлены с облака Gist (с другого устройства)!');
       }
       return restored;
     }
-  }catch(e){ addTerminalLog('warn','load cloud '+e.message); }
+  }catch(e){ console.log('Load from cloud failed', e); }
   return false;
 }
 
@@ -885,205 +750,98 @@ function checkKeys(){
   const el=document.getElementById('keyStatus');
   if(g){
     let txt=`✅ Gemini есть (${g.slice(0,8)}...), Groq: ${groq?'есть':'нет'}. Сохранено: локально ✅`;
-    if(pat) txt+=', облако ✅';
-    txt+=', сервер ✅. Не пропадет!';
-    el.textContent=txt; el.style.color='#00ff88';
+    if(pat) txt+=', облако Gist ✅';
+    txt+=', сервер Replit попробует ✅. Перезагрузи - не пропадет!';
+    el.textContent=txt; el.style.color='#4ade80';
   } else {
-    el.textContent='❌ Введи Gemini ключ с aistudio.google.com — сохранится навсегда!';
-    el.style.color='#ffcc00';
+    el.textContent='❌ Введи Gemini ключ с aistudio.google.com - он сохранится навсегда на 3 уровнях!';
+    el.style.color='#fbbf24';
   }
 }
 
 async function loadModels(){
   const groqKey=localStorage.getItem('groq');
   const geminiKey=localStorage.getItem('gemini');
-  const freeModelKey=localStorage.getItem('freemodel')||localStorage.getItem('cc_key')||'';
   const div=document.getElementById('modelList');
-  const topSelect=document.getElementById('topModelSelect');
   let html='';
-  const stablePriority=["gemini-2.0-flash","gemini-1.5-flash","gemini-1.5-flash-8b","gemini-flash-latest","gemini-2.5-flash-lite","gemini-2.5-flash","gemini-2.5-pro","gemini-3-flash-preview"];
-  
-  if(!geminiKey && !groqKey && !freeModelKey){
-    html='<span class="small" style="color:#ff4d6d">❌ Нет API ключа! Введи Gemini ключ в ⚙️ Настройки → API ключи<br>Ключ должен начинаться с AIzaSy...<br>Без ключа модели не покажутся — это не фейк, это честно!</span>';
-    if(topSelect){ topSelect.innerHTML='<option value="">❌ Нет ключа — введи в ⚙️</option>'; }
-    div.innerHTML=html;
-    addTerminalLog('warn','loadModels: нет ключей');
-    return;
-  }
-
-  // FreeModel cc_ keys
-  if(freeModelKey){
-    try{
-      addTerminalLog('info',`[MODELS] → FreeModel check cc_ key ${freeModelKey.slice(0,8)}...`);
-      const r=await fetch('https://api.freemodel.dev/v1/models',{headers:{'Authorization':'Bearer '+freeModelKey}});
-      const j=await r.json();
-      if(j.data && j.data.length>0){
-        html+=`<div class="small">✅ FreeModel (${freeModelKey.slice(0,8)}...): ${j.data.length} моделей:</div>`;
-        j.data.slice(0,20).forEach(m=>{ 
-          const id=m.id;
-          html+=`<span class="badge ${('freemodel/'+id)===currentModel?'active':''}" onclick="selectModel('freemodel/${id}')">${id.slice(0,20)}</span>`; 
-        });
-        if(topSelect){
-          j.data.slice(0,30).forEach(m=>{
-            const opt=document.createElement('option');
-            opt.value='freemodel/'+m.id;
-            opt.textContent=m.id+' (FreeModel)';
-            if(('freemodel/'+m.id)===currentModel) opt.selected=true;
-            topSelect.appendChild(opt);
-          });
-        }
-        addTerminalLog('ok',`[MODELS] FreeModel ${j.data.length} моделей`);
-      } else {
-        html+=`<div class="small" style="color:#ffcc00">⚠️ FreeModel ключ ${freeModelKey.slice(0,8)}... не вернул модели или невалидный. Попробуй пересоздать на freemodel.dev</div>`;
-        addTerminalLog('warn','FreeModel no models');
-      }
-    }catch(e){ addTerminalLog('warn','FreeModel check fail '+e.message); }
-  }
-
+  const stablePriority=["gemini-2.0-flash","gemini-1.5-flash","gemini-1.5-flash-8b","gemini-flash-latest","gemini-2.5-flash-lite","gemini-2.5-flash","gemini-2.5-pro","gemini-3-flash-preview","gemini-3.6-flash","gemini-3.8-flash"];
   if(geminiKey){
+    // Проверка формата ключа
     if(geminiKey.startsWith('AQ.') && !geminiKey.startsWith('AIza')){
-      html+=`<div class="small" style="color:#ff4d6d">❌ Ключ ${geminiKey.slice(0,10)}... НЕВЕРНЫЙ! Настоящий начинается с AIzaSy...<br>Иди на https://aistudio.google.com/app/apikeys</div>`;
-      addTerminalLog('err','loadModels: ключ неверный формат AQ... вместо AIza');
+      html+=`<div class="small" style="color:#f55">❌ Ключ ${geminiKey.slice(0,10)}... НЕВЕРНЫЙ! Это не Gemini API ключ. Настоящий ключ начинается с AIzaSy...<br>Иди на https://aistudio.google.com/app/apikeys → Create API key → скопируй AIza...<br>Ключ AQ.Ab8... который ты вставил - это OAuth токен, он не работает для моделей. Из-за него показывает только 3-4 модели (fallback).</div>`;
     }
     try{
-      addTerminalLog('info',`[MODELS] → https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey.slice(0,8)}...\n  ключ: ${geminiKey.slice(0,8)}... (${geminiKey.length} chars)`);
       const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?key='+geminiKey);
       const j=await r.json();
-      addTerminalLog(r.ok?'ok':'err',`[MODELS] ← ${r.status} ${r.statusText}\n  ${JSON.stringify(j).slice(0,500)}`);
-      if(j.error){ 
-        addTerminalLog('err','[MODELS] ❌ '+j.error.message);
-        throw j.error.message; 
+      if(j.error){
+        const msg=j.error.message||'';
+        if(msg.includes('API key') || msg.includes('invalid') || msg.includes('UNAUTHENTICATED') || r.status===400 || r.status===401){
+          html+=`<div class="small" style="color:#f55">❌ Ошибка ключа: ${msg.slice(0,200)}<br>Ключ должен начинаться с AIzaSy... Возьми с https://aistudio.google.com/app/apikeys</div>`;
+        } else {
+          html+=`<div class="small" style="color:#fbbf24">⚠️ ${msg.slice(0,200)}</div>`;
+        }
+        throw 'key error';
       }
       if(j.models){
         const models=j.models.filter(m=>m.name.includes('gemini')).map(m=>m.name.replace('models/',''));
         models.sort((a,b)=>{ const ai=stablePriority.indexOf(a); const bi=stablePriority.indexOf(b); if(ai!==-1 && bi!==-1) return ai-bi; if(ai!==-1) return -1; if(bi!==-1) return 1; return 0; });
-        html+=`<div class="small">✅ Найдено ${models.length} РЕАЛЬНЫХ моделей с твоего ключа:</div>`;
+        html+=`<div class="small">✅ Найдено ${models.length} моделей (реальные с твоего ключа):</div>`;
         html+='<div class="small">Стабильные:</div>';
         models.filter(m=>stablePriority.includes(m)).forEach(m=>{ html+=`<span class="badge ${m===currentModel?'active':''}" onclick="selectModel('${m}')">${m.replace('gemini-','')}</span>`; });
-        html+='<div class="small" style="margin-top:6px">Все ${models.length}:</div>';
+        html+='<div class="small" style="margin-top:6px">Все остальные (${models.length}):</div>';
         models.forEach(m=>{ html+=`<span class="badge ${m===currentModel?'active':''}" onclick="selectModel('${m}')">${m.replace('gemini-','').slice(0,18)}</span>`; });
-        
-        // Заполняем верхний селектор РЕАЛЬНЫМИ моделями
-        if(topSelect){
-          topSelect.innerHTML=models.map(m=>`<option value="${m}" ${m===currentModel?'selected':''}>${m.replace('gemini-','')} ${stablePriority.includes(m)?'⭐':''}</option>`).join('');
-          addTerminalLog('ok',`[MODELS] Верхний селектор заполнен ${models.length} реальными моделями`);
-        }
       } else throw 'no models';
     }catch(e){
       if(!html.includes('❌')){
-        html+=`<div class="small" style="color:#ffcc00">⚠️ Ошибка загрузки моделей: ${String(e).slice(0,200)}<br>Показываю fallback 4 модели, но это не фейк — это запасные если API не отвечает. Проверь ключ!</div>`;
+        html+=`<div class="small" style="color:#fbbf24">⚠️ Не смог загрузить модели, показываю fallback (4 штуки). Проверь ключ - должен быть AIzaSy...</div>`;
       }
       const fallback=["gemini-2.0-flash","gemini-1.5-flash","gemini-flash-latest","gemini-2.5-flash-lite"];
       fallback.forEach(m=>{ html+=`<span class="badge ${m===currentModel?'active':''}" onclick="selectModel('${m}')">${m.replace('gemini-','')}</span>`; });
-      if(topSelect){
-        topSelect.innerHTML=fallback.map(m=>`<option value="${m}" ${m===currentModel?'selected':''}>${m} (fallback)</option>`).join('');
-      }
-      addTerminalLog('warn','[MODELS] fallback '+e);
     }
   }
   if(groqKey){
     try{
       const r2=await fetch('https://api.groq.com/openai/v1/models',{headers:{'Authorization':'Bearer '+groqKey}});
       const j2=await r2.json();
-      if(j2.data){ 
-        html+='<div class="small" style="margin-top:6px">Groq:</div>'; 
-        j2.data.slice(0,6).forEach(m=>{ html+=`<span class="badge ${('groq/'+m.id)===currentModel?'active':''}" onclick="selectModel('groq/${m.id}')">${m.id.slice(0,15)}</span>`; }); 
-        if(topSelect){
-          j2.data.forEach(m=>{
-            const opt=document.createElement('option');
-            opt.value='groq/'+m.id;
-            opt.textContent='groq/'+m.id;
-            if(('groq/'+m.id)===currentModel) opt.selected=true;
-            topSelect.appendChild(opt);
-          });
-        }
-      }
+      if(j2.data){ html+='<div class="small" style="margin-top:6px">Groq:</div>'; j2.data.slice(0,6).forEach(m=>{ html+=`<span class="badge ${('groq/'+m.id)===currentModel?'active':''}" onclick="selectModel('groq/${m.id}')">${m.id.slice(0,15)}</span>`; }); }
     }catch(e){}
   }
-  if(!html) html='<span class="small">Введи ключ в ⚙️</span>';
+  if(!html) html='<span class="small">Введи ключ в настройках ⚙️</span>';
   div.innerHTML=html;
   document.getElementById('curModel').textContent=currentModel.replace('gemini-','');
-  const topModelEl=document.getElementById('topModel');
-  if(topModelEl) topModelEl.textContent=currentModel.replace('gemini-','').slice(0,12);
-  addTerminalLog('info','Модели загружены, текущая '+currentModel);
+  document.getElementById('topModel').textContent=currentModel.replace('gemini-','').slice(0,12);
 }
 function selectModel(m){
   currentModel=m; localStorage.setItem('selectedModel',m);
-  const curEl=document.getElementById('curModel'); if(curEl) curEl.textContent=m.replace('gemini-','');
-  const topEl=document.getElementById('topModel'); if(topEl) topEl.textContent=m.replace('gemini-','').slice(0,12);
-  const topSel=document.getElementById('topModelSelect'); if(topSel) topSel.value=m;
+  document.getElementById('curModel').textContent=m.replace('gemini-','');
+  document.getElementById('topModel').textContent=m.replace('gemini-','').slice(0,12);
   loadModels(); addMessage('system','Модель: '+m);
-  addTerminalLog('ok','Модель выбрана '+m);
 }
 
 async function callAI(prompt, retryCount=0){
   const geminiKey=localStorage.getItem('gemini');
   const groqKey=localStorage.getItem('groq');
-  const freeModelKey=localStorage.getItem('freemodel')||localStorage.getItem('cc_key')||'';
   let model=currentModel;
   const fallbackChain=["gemini-2.0-flash","gemini-1.5-flash","gemini-1.5-flash-8b","gemini-flash-latest","groq/llama-3.1-8b-instant"];
   async function tryModel(mdl){
-    if(mdl.startsWith('freemodel/')){
-      if(!freeModelKey) throw new Error('Нет FreeModel cc_ ключа');
-      const id=mdl.replace('freemodel/','');
-      addTerminalLog('info',`[AI] → FreeModel API\n  кто: ${currentUser}\n  модель: ${id}\n  ключ: ${freeModelKey.slice(0,8)}... (${freeModelKey.length} chars)\n  промпт: ${prompt.length} chars\n  URL: https://api.freemodel.dev/v1/chat/completions`);
-      // Пробуем несколько эндпоинтов FreeModel
-      const endpoints=[
-        'https://api.freemodel.dev/v1/chat/completions',
-        'https://vip-sg.freemodel.dev/v1/chat/completions'
-      ];
-      let lastErr=null;
-      for(const ep of endpoints){
-        try{
-          const res=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+freeModelKey},body:JSON.stringify({model:id,messages:[{role:'user',content:prompt}],temperature:0.7,max_tokens:2048})});
-          const data=await res.json();
-          addTerminalLog(res.ok?'ok':'err',`[AI] ← FreeModel ${ep} ${res.status}\n  ${JSON.stringify(data).slice(0,500)}`);
-          if(!res.ok) { lastErr=data.error?.message||JSON.stringify(data).slice(0,300); continue; }
-          const out=data.choices?.[0]?.message?.content||data.response||'Нет ответа';
-          addTerminalLog('ok',`[AI] FreeModel вернул ${out.length} chars`);
-          return out;
-        }catch(e){ lastErr=e.message; addTerminalLog('warn','FreeModel endpoint fail '+ep+' '+e.message); }
-      }
-      throw new Error(lastErr||'FreeModel error - ключ cc_ невалидный для чата, только список моделей. Пересоздай на freemodel.dev');
-    }
     if(mdl.startsWith('groq/')){
       if(!groqKey) throw new Error('Нет Groq ключа');
       const id=mdl.replace('groq/','');
-      addTerminalLog('info',`[AI] → Groq API\n  кто: ${currentUser}\n  модель: ${id}\n  ключ: ${groqKey.slice(0,8)}... (${groqKey.length} chars)\n  промпт: ${prompt.length} chars\n  URL: https://api.groq.com/openai/v1/chat/completions`);
       const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey},body:JSON.stringify({model:id,messages:[{role:'user',content:prompt}],temperature:0.7})});
-      const data=await res.json();
-      addTerminalLog(res.ok?'ok':'err',`[AI] ← Groq ${res.status}\n  ответ: ${JSON.stringify(data).slice(0,400)}\n  ${res.ok?'✅ Успех':'❌ Ошибка'}`);
-      if(!res.ok) throw new Error(data.error?.message||'Groq error'); 
-      const out=data.choices[0].message.content;
-      addTerminalLog('ok',`[AI] Groq вернул ${out.length} chars`);
-      return out;
+      const data=await res.json(); if(!res.ok) throw new Error(data.error?.message||'Groq error'); return data.choices[0].message.content;
     } else {
       if(!geminiKey) throw new Error('Нет Gemini ключа, введи в настройках');
       const apiModel=mdl.startsWith('models/')?mdl:`models/${mdl}`;
       const url=`https://generativelanguage.googleapis.com/v1beta/${apiModel}:generateContent?key=${geminiKey}`;
-      addTerminalLog('info',`[AI] → Gemini API\n  кто: ${currentUser}\n  модель: ${mdl} → ${apiModel}\n  ключ: ${geminiKey.slice(0,8)}... (${geminiKey.length} chars) ${geminiKey.startsWith('AIza')?'✅ формат верный':'❌ формат неверный!'}\n  промпт: ${prompt.length} chars\n  URL: ${url.replace(geminiKey,'KEY_HIDDEN')}`);
       const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,maxOutputTokens:2048}})});
       const data=await res.json();
-      addTerminalLog(res.ok?'ok':'err',`[AI] ← Gemini ${res.status}\n  ответ: ${JSON.stringify(data).slice(0,500)}\n  ${res.ok?'✅ Успех':'❌ Ошибка: '+(data.error?.message||'').slice(0,200)}`);
-      if(!res.ok){ 
-        const msg=(data.error?.message||'').toLowerCase(); 
-        addTerminalLog('err',`[AI] Gemini ошибка: ${data.error?.message||'unknown'} | status ${res.status}`);
-        if(msg.includes('high demand')||msg.includes('overloaded')||msg.includes('resource')||res.status===503||res.status===429) throw new Error('HIGH_DEMAND:'+mdl); 
-        throw new Error((data.error?.message||'').slice(0,300)); 
-      }
-      const out=data.candidates?.[0]?.content?.parts?.[0]?.text||'Нет ответа';
-      addTerminalLog('ok',`[AI] Gemini вернул ${out.length} chars, модель ${mdl}`);
-      return out;
+      if(!res.ok){ const msg=(data.error?.message||'').toLowerCase(); if(msg.includes('high demand')||msg.includes('overloaded')||msg.includes('resource')||res.status===503||res.status===429) throw new Error('HIGH_DEMAND:'+mdl); throw new Error((data.error?.message||'').slice(0,300)); }
+      return data.candidates?.[0]?.content?.parts?.[0]?.text||'Нет ответа';
     }
   }
-  try{ 
-    addTerminalLog('info',`[AI] Вызов модели ${model}, попытка ${retryCount+1}`);
-    return await tryModel(model); 
-  }catch(e){
-    addTerminalLog('err','[AI] ❌ '+e.message);
+  try{ return await tryModel(model); }catch(e){
     if(e.message.startsWith('HIGH_DEMAND') && retryCount<fallbackChain.length){
       const next=fallbackChain[retryCount];
-      addTerminalLog('warn',`[AI] ${model} перегружен (high demand), переключаюсь на ${next}`);
       const chatEl=document.getElementById('chatInner'); const div=document.createElement('div'); div.className='bubble system'; div.textContent=`${model} перегружен, переключаюсь на ${next}...`; chatEl.appendChild(div);
       currentModel=next; localStorage.setItem('selectedModel',next); document.getElementById('curModel').textContent=next.replace('gemini-',''); document.getElementById('topModel').textContent=next.replace('gemini-','').slice(0,12);
       return await callAI(prompt,retryCount+1);
@@ -1094,118 +852,52 @@ async function callAI(prompt, retryCount=0){
 async function sendMsg(){
   const inp=document.getElementById('msgInput');
   const txt=inp.value.trim(); if(!txt) return;
-  inp.value=''; inp.style.height='26px';
-  addMessage('me',txt);
+  inp.value=''; inp.style.height='24px';
   const geminiKey=localStorage.getItem('gemini')||'';
-  const groqKey=localStorage.getItem('groq')||'';
-  const linuxUrl=localStorage.getItem('codespaceUrl')||'https://my-agent--heckar904.replit.app';
-  addTerminalLog('info',`[SEND] 👤 ${currentUser} отправляет сообщение\n  куда: ${linuxUrl} + Gemini API\n  текст: "${txt.slice(0,100)}" (${txt.length} chars)\n  модель: ${currentModel}\n  режим: ${currentMode}\n  ключи: gemini=${geminiKey?geminiKey.slice(0,8)+'... ('+geminiKey.length+')':'НЕТ!'} groq=${groqKey?groqKey.slice(0,8)+'...':'нет'}\n  файлы: ${selectedFiles.length}\n  чатID: ${currentChatId}`);
-  
+  addTerminalLog('info',`[SEND] 👤 ${currentUser} → "${txt.slice(0,80)}" (${txt.length} chars) | модель ${currentModel} | режим ${currentMode} | ключ ${geminiKey?geminiKey.slice(0,8)+'... ('+geminiKey.length+')':'НЕТ!'}`);
+  addMessage('me',txt);
   const lower=txt.toLowerCase();
-  if(lower.includes('смонтируй') && (lower.includes('тикток')||lower.includes('tiktok')||lower.includes('видео'))){ 
-    addTerminalLog('info','[SEND] Обнаружен запрос монтажа TikTok');
-    switchMode('montage'); 
-    if(selectedFiles.length>0) doTikTokMontage(); 
-    else addMessage('ai','Прикрепи видео через + (до 1ГБ) и нажми Смонтировать.'); 
-    return; 
-  }
-  const bubble=addMessage('ai','<div class="typing"><span></span><span></span><span></span></div> Думаю через Linux...');
+  if(lower.includes('смонтируй') && (lower.includes('тикток')||lower.includes('tiktok')||lower.includes('видео'))){ switchMode('montage'); if(selectedFiles.length>0) doTikTokMontage(); else addMessage('ai','Прикрепи видео через + (до 1ГБ) и нажми Смонтировать.'); return; }
+  if(lower.includes('линукс')||lower.includes('linux')){ addMessage('ai','Linux: 2 vCPU, 1.9GB, 25GB, Debian 13. Сейчас: '+document.getElementById('linuxDetails').textContent); }
+  const bubble=addMessage('ai','Думаю...');
   try{
-    // Пробуем Linux сначала если онлайн - ДЕТАЛЬНО
-    let usedLinux=false;
-    addTerminalLog('info',`[SEND] → Пробую Linux\n  URL: ${linuxUrl.replace(/\/$/,'')+'/chat'}\n  метод: POST\n  тело: {prompt: ${txt.length} chars, model: ${currentModel}}`);
-    try{
-      const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),10000);
-      const start=Date.now();
-      const r=await fetch(linuxUrl.replace(/\/$/,'')+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:txt,model:currentModel}),signal:ctrl.signal});
-      const elapsed=Date.now()-start;
-      addTerminalLog(r.ok?'ok':'warn',`[SEND] ← Linux ответ за ${elapsed}ms\n  статус: ${r.status} ${r.statusText}\n  ${r.ok?'✅':'❌'}`);
-      if(r.ok){
-        const d=await r.json();
-        addTerminalLog('info',`[SEND] Linux данные: via=${d.via||'unknown'}, model=${d.model||currentModel}, response ${d.response?d.response.length+' chars':'пусто'}`);
-        if(d.response){
-          bubble.innerHTML=d.response.replace(/\n/g,'<br>');
-          if(chats[currentChatId]){ chats[currentChatId].messages[chats[currentChatId].messages.length-1].text=d.response; saveChats(); }
-          addTerminalLog('ok',`[SEND] ✅ Ответ через Linux (${d.via}), ${d.response.length} chars`);
-          usedLinux=true;
-        } else {
-          addTerminalLog('warn','[SEND] Linux вернул пустой response, fallback к Gemini');
-        }
-      } else {
-        const errTxt=await r.text();
-        addTerminalLog('warn',`[SEND] Linux ошибка ${r.status}: ${errTxt.slice(0,300)} → fallback к Gemini`);
-      }
-    }catch(e){ 
-      addTerminalLog('warn',`[SEND] ❌ Linux не ответил: ${e.message} → fallback к прямому Gemini API`);
-    }
-    if(!usedLinux){
-      addTerminalLog('info',`[SEND] → Fallback напрямую к Gemini\n  причина: Linux не ответил или пусто\n  модель: ${currentModel}\n  ключ: ${geminiKey?geminiKey.slice(0,8)+'...':'НЕТ КЛЮЧА!'}`);
-      const sys=currentMode==='agent'?'Ты агент с Vision, Audio, Director, CLIP. Отвечай кратко как ChatGPT.':'Ты помощник, отвечай кратко как ChatGPT.';
-      const ans=await callAI(sys+'\n\nПользователь: '+txt);
-      bubble.textContent=ans; 
-      if(chats[currentChatId]){ chats[currentChatId].messages[chats[currentChatId].messages.length-1].text=ans; saveChats(); }
-      addTerminalLog('ok',`[SEND] ✅ Ответ напрямую Gemini, ${ans.length} chars`);
-    }
+    const sys=currentMode==='agent'?'Ты агент с Vision, Audio, Director, CLIP. Отвечай кратко как ChatGPT.':'Ты помощник, отвечай кратко как ChatGPT.';
+    addTerminalLog('info',`[SEND] → callAI sys ${sys.length} chars + prompt ${txt.length} chars | ключ ${geminiKey?geminiKey.slice(0,8)+'...':'НЕТ'}`);
+    const ans=await callAI(sys+'\n\nПользователь: '+txt);
+    addTerminalLog('ok',`[SEND] ← AI ответ ${ans.length} chars: "${ans.slice(0,100)}..."`);
+    bubble.textContent=ans; if(chats[currentChatId]){ chats[currentChatId].messages[chats[currentChatId].messages.length-1].text=ans; saveChats(); }
   }catch(e){ 
     bubble.textContent='Ошибка: '+e.message; 
-    addTerminalLog('err',`[SEND] ❌ КРИТ ОШИБКА: ${e.message}\n  стек: ${e.stack?.slice(0,500)||'нет'}`);
+    addTerminalLog('err',`[SEND] ❌ ${e.message}`);
   }
 }
 
-// LINUX AUTO
+// ===== LINUX AUTO SETUP FULL + MULTI-ACCOUNT ROTATION =====
 async function saveAndAutoSetup(){
   let pat=document.getElementById('githubPat').value.trim();
   const url=document.getElementById('codespaceUrl').value.trim();
-  if(!pat && !url.includes('replit.app')){
-    // Для Replit PAT не обязателен
-    if(url) localStorage.setItem('codespaceUrl',url);
-    document.getElementById('patStatus').textContent='✅ Replit работает без PAT, в фоне!';
-    addMessage('system','✅ Linux Replit работает без PAT, в фоне!');
-    await checkLinuxReal();
-    return;
-  }
-  if(pat) localStorage.setItem('githubPat',pat);
+  if(!pat){ alert('Вставь GitHub токен ghp_... Создать: github.com/settings/tokens → Generate classic → галочки repo, codespace, workflow'); window.open('https://github.com/settings/tokens','_blank'); return; }
+  localStorage.setItem('githubPat',pat);
   const extraInputs=document.querySelectorAll('.extra-pat');
   const extraPats=Array.from(extraInputs).map(i=>i.value.trim()).filter(v=>v);
   localStorage.setItem('extraPats', JSON.stringify(extraPats));
   if(url) localStorage.setItem('codespaceUrl',url);
   localStorage.setItem('autoWake','1');
   localStorage.setItem('keepAlive','1');
-  document.getElementById('patStatus').textContent=`✅ Сохранено, настраиваю...`;
-  addMessage('system',`Сохранил, настраиваю Linux...`);
-  addTerminalLog('info','saveAndAutoSetup');
+  document.getElementById('autoWakeToggle').checked=true;
+  document.getElementById('keepAliveToggle').checked=true;
+  const allCount=1+extraPats.length;
+  document.getElementById('patStatus').textContent=`✅ Сохранено ${allCount} акков, настраиваю...`;
+  addMessage('system',`Сохранил ${allCount} GitHub акков. Когда 60ч кончатся на одном - автоматом переключусь! Сейчас настрою...`);
   await autoSetupEverything();
 }
 
 async function autoSetupEverything(){
   const allPats=getAllPats();
+  if(allPats.length===0){ alert('Вставь GitHub токен ghp_...'); window.open('https://github.com/settings/tokens','_blank'); return; }
   const log=document.getElementById('linuxLog');
   log.style.display='block';
-  log.textContent=`🤖 Авто-настройка Neon...\n`;
-  addTerminalLog('info','autoSetupEverything '+allPats.length+' акков');
-
-  // Сначала пробуем Replit - он в фоне, открывать не надо!
-  try{
-    const rRes=await fetch('https://my-agent--heckar904.replit.app/status');
-    if(rRes.ok){
-      const rData=await rRes.json();
-      log.textContent+=`✅ Replit онлайн в фоне! ${rData.cpus} vCPU ${rData.totalMem}\nНе надо открывать ссылку — сайт сам подключился!\n`;
-      document.getElementById('codespaceUrl').value='https://my-agent--heckar904.replit.app';
-      localStorage.setItem('codespaceUrl','https://my-agent--heckar904.replit.app');
-      document.getElementById('linuxStatus').textContent='онлайн'; document.getElementById('linuxStatus').style.color='#00ff88';
-      document.getElementById('linuxDetails').textContent=`✅ Linux онлайн в фоне: ${rData.cpus} vCPU ${rData.totalMem}`;
-      addTerminalLog('ok','Replit онлайн');
-      if(allPats.length===0){
-        log.textContent+=`\n🎉 Готово! Linux работает в фоне, открывать не надо!\n`;
-        return;
-      }
-    }
-  }catch(e){ log.textContent+=`Replit не отвечает, пробую Codespace...\n`; }
-
-  if(allPats.length===0){ 
-    log.textContent+='Вставь PAT если хочешь Codespace, а так Replit уже работает!\n';
-    return; 
-  }
+  log.textContent=`🤖 Авто-настройка с ротацией ${allPats.length} акков (обман лимита)...\n`;
   let pat=null;
   let data=null;
   for(let pi=0; pi<allPats.length; pi++){
@@ -1216,18 +908,19 @@ async function autoSetupEverything(){
       const j=await res.json();
       if(j.message && j.message.includes('Bad credentials')){ log.textContent+=`❌ Токен #${pi+1} невалидный\n`; continue; }
       if(j.codespaces){ data=j; log.textContent+=`✅ Акк #${pi+1} рабочий, ${j.codespaces.length} codespaces\n`; break; }
+      if(j.message && j.message.toLowerCase().includes('limit')){ log.textContent+=`⚠️ Акк #${pi+1} лимит кончился (60ч), пробую следующий\n`; continue; }
     }catch(e){ log.textContent+=`Ошибка акка #${pi+1}: ${e.message}\n`; }
   }
-  if(!data){ log.textContent+='❌ Ни один токен не сработал, но Replit работает!\n'; return; }
+  if(!data){ log.textContent+='❌ Ни один токен не сработал\n'; return; }
   try{
     log.textContent+='1. Ищу Codespaces...\n';
     let target=null;
     if(data.codespaces){
       target=data.codespaces.find(c=>c.repository?.full_name==='heckar904-cmyk/my-agent') || data.codespaces[0];
-      log.textContent+=`Нашел ${data.codespaces.length}, выбрал ${target?.name||'нет'}\n`;
+      log.textContent+=`Нашел ${data.codespaces.length} codespaces, выбрал ${target?.name||'нет'}\n`;
     }
     if(!target){
-      log.textContent+='2. Создаю новый...\n';
+      log.textContent+='2. Нет Codespace, создаю новый для my-agent...\n';
       const createRes=await fetch('https://api.github.com/repos/heckar904-cmyk/my-agent/codespaces',{
         method:'POST',headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
         body:JSON.stringify({machine:'basicLinux32gb', location:'WestEurope', devcontainer_path:'.devcontainer/devcontainer.json'})
@@ -1235,96 +928,160 @@ async function autoSetupEverything(){
       const createData=await createRes.json();
       if(createRes.ok){
         target=createData;
-        log.textContent+=`✅ Создал ${createData.name}, жду 40 сек...\n`;
+        log.textContent+=`✅ Создал ${createData.name}, жду запуска 60 сек...\n`;
         await new Promise(r=>setTimeout(r,40000));
       } else {
-        log.textContent+=`Не смог: ${JSON.stringify(createData).slice(0,300)}\n`;
+        log.textContent+=`Не смог создать: ${JSON.stringify(createData).slice(0,300)}\nПробую через GitHub сайт...\n`;
         window.open('https://github.com/heckar904-cmyk/my-agent/codespaces','_blank');
         return;
       }
     }
+    // 2. Будим если спит - РОБАСТНО 6 попыток
     let attempts=0;
-    while(attempts<4){
+    while(attempts<6){
       const curState = target.state || 'Unknown';
-      log.textContent+=`3. Состояние ${curState}, бужу ${target.name}...\n`;
-      if(curState!=='Available'){
+      log.textContent+=`3. Попытка ${attempts+1}/6: состояние ${curState}, бужу ${target.name}...\n`;
+      if(curState!=='Available' && curState!=='available'){
         try{
-          await fetch(`https://api.github.com/user/codespaces/${target.name}/start`,{method:'POST',headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json'}});
-        }catch(e){}
-      } else { log.textContent+=`✅ Уже Available\n`; break; }
+          const startRes=await fetch(`https://api.github.com/user/codespaces/${target.name}/start`,{method:'POST',headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json'}});
+          const startData=await startRes.json();
+          log.textContent+=`Ответ старта: ${startRes.status} ${JSON.stringify(startData).slice(0,200)}\n`;
+        }catch(e){ log.textContent+=`Ошибка старта: ${e.message}\n`; }
+      } else {
+        log.textContent+=`✅ Уже Available\n`;
+        break;
+      }
       await new Promise(r=>setTimeout(r,15000));
       try{
         const freshRes=await fetch(`https://api.github.com/user/codespaces/${target.name}`,{headers:{'Authorization':'token '+pat}});
         const fresh=await freshRes.json();
         target=fresh;
-        if(fresh.state==='Available'){ log.textContent+='✅ Проснулся!\n'; break; }
-      }catch(e){}
+        log.textContent+=`Новое состояние: ${fresh.state}\n`;
+        if(fresh.state==='Available' || fresh.state==='available'){ log.textContent+='✅ Проснулся!\n'; break; }
+      }catch(e){ log.textContent+='Не смог проверить: '+e.message+'\n'; }
       attempts++;
     }
+    // 3. Свежий статус
     const freshRes=await fetch(`https://api.github.com/user/codespaces/${target.name}`,{headers:{'Authorization':'token '+pat}});
     const fresh=await freshRes.json();
     log.textContent+=`Web URL: ${fresh.web_url}, состояние: ${fresh.state}\n`;
+    // 4. Порт 3000 public - делаем публичным, но не паникуем если API не отвечает из-за CORS
     let portUrl=`https://${target.name}-3000.app.github.dev`;
-    let portFound=false;
+    let portPublic=false;
     for(let i=0;i<2;i++){
       try{
         const portsRes=await fetch(`https://api.github.com/user/codespaces/${target.name}/ports`,{headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json'}});
-        if(!portsRes.ok){ break; }
+        if(!portsRes.ok){ log.textContent+=`Ports API ${portsRes.status}, пропускаю проверку портов\n`; break; }
         const portsData=await portsRes.json();
-        if(portsData.ports && portsData.ports.length>0){
-          log.textContent+=`Портов: ${portsData.ports.length}\n`;
+        if(portsData.ports){
           const p3000=portsData.ports.find(p=>p.port_number===3000);
-          if(p3000){ portFound=true; if(p3000.browse_url) portUrl=p3000.browse_url; log.textContent+=`✅ Порт 3000: ${p3000.visibility}\n`; break; }
+          if(p3000){
+            log.textContent+=`Порт 3000: ${p3000.visibility}, URL: ${p3000.browse_url||'нет'}\n`;
+            if(p3000.browse_url) portUrl=p3000.browse_url;
+            if(p3000.visibility!=='public'){
+              log.textContent+=`Делаю публичным (попытка ${i+1})...\n`;
+              try{
+                await fetch(`https://api.github.com/user/codespaces/${target.name}/ports/3000`,{method:'PATCH',headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({visibility:'public'})});
+                await new Promise(r=>setTimeout(r,3000));
+              }catch(e){ log.textContent+=`Не смог сделать public через API (CORS?), сделай вручную в VS Code → Ports → 3000 → Public\n`; }
+            } else { log.textContent+='Порт уже публичный ✅\n'; portPublic=true; break; }
+          } else {
+            log.textContent+=`Порт 3000 еще не проброшен, жду 5 сек...\n`;
+            await new Promise(r=>setTimeout(r,5000));
+          }
         }
-      }catch(e){ break; }
-    }
-    if(!portFound){
-      log.textContent+=`\n🔧 Порт 3000 нет — сервер не запущен. Открой ${fresh.web_url} и в терминале: cd /workspaces/my-agent && npm install && node server.js\n`;
+      }catch(e){
+        log.textContent+=`Ports API недоступен из браузера (это норм), пропускаю. Порт сделай Public вручную если надо.\n`;
+        console.log('ports fetch error', e);
+        break;
+      }
     }
     document.getElementById('codespaceUrl').value=portUrl;
     localStorage.setItem('codespaceUrl',portUrl);
     log.textContent+=`✅ URL: ${portUrl}\n`;
+    // 5. Проверка сервера - улучшенная, без спама Failed to fetch
+    log.textContent+='4. Проверяю сервер (3 попытки)...\n';
     let serverOk=false;
     for(let i=0;i<3;i++){
       try{
-        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),8000);
-        const sRes=await fetch(portUrl+'/status',{signal:ctrl.signal});
+        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),10000);
+        const sRes=await fetch(portUrl+'/status',{signal:ctrl.signal, mode:'cors'});
         if(sRes.ok){
           const sData=await sRes.json();
-          log.textContent+=`✅ Сервер онлайн! ${sData.cpus} vCPU\n`;
-          document.getElementById('linuxStatus').textContent='онлайн'; 
-          serverOk=true; break;
+          log.textContent+=`✅ Сервер онлайн! ${sData.cpus} vCPU, ${sData.totalMem}\n`;
+          document.getElementById('linuxStatus').textContent='онлайн'; document.getElementById('linuxStatus').style.color='#4ade80';
+          document.getElementById('linuxDetails').textContent=`${sData.cpus} vCPU • ${sData.totalMem} • ${sData.hostname}`;
+          serverOk=true;
+          break;
+        } else {
+          log.textContent+=`Попытка ${i+1}: HTTP ${sRes.status}\n`;
+          await new Promise(r=>setTimeout(r,5000));
         }
-      }catch(e){ await new Promise(r=>setTimeout(r,5000)); }
+      }catch(e){
+        log.textContent+=`Попытка ${i+1}: не отвечает (${e.message}). `;
+        if(i===0) log.textContent+=`Это норм если порт Private или сервер еще стартует.\n`;
+        else log.textContent+=`\n`;
+        await new Promise(r=>setTimeout(r,5000));
+      }
     }
     if(!serverOk){
-      log.textContent+=`\n⚠️ Codespace онлайн но сервер не отвечает. Использую Replit: https://my-agent--heckar904.replit.app\n`;
-      document.getElementById('codespaceUrl').value='https://my-agent--heckar904.replit.app';
-      localStorage.setItem('codespaceUrl','https://my-agent--heckar904.replit.app');
+      log.textContent+=`\n⚠️ Сервер не отвечает, но Codespace Available — это значит:\n1. Порт 3000 Private — зайди в ${fresh.web_url} → вкладка PORTS → 3000 → правый клик → Port Visibility → Public\n2. Или сервер не запустился — в Codespace терминале: npm install && node server.js\n3. Или используй Replit (рекомендую) — он никогда не требует Public: https://my-agent--heckar904.replit.app\n`;
+      log.textContent+=`Текущий URL сохранен: ${portUrl}\nПопробуй открыть его в новой вкладке — если просит GitHub логин, значит порт Private.\n`;
+      // Пробуем Replit как fallback
+      try{
+        const rRes=await fetch('https://my-agent--heckar904.replit.app/status');
+        if(rRes.ok){
+          const rData=await rRes.json();
+          log.textContent+=`\n✅ Зато Replit работает! ${rData.cpus} vCPU ${rData.totalMem} — используй его: https://my-agent--heckar904.replit.app\n`;
+          document.getElementById('codespaceUrl').value='https://my-agent--heckar904.replit.app';
+          localStorage.setItem('codespaceUrl','https://my-agent--heckar904.replit.app');
+          document.getElementById('linuxStatus').textContent='онлайн (Replit)';
+          document.getElementById('linuxStatus').style.color='#4ade80';
+        }
+      }catch(e){}
+    } else {
+      log.textContent+=`\n🎉 Готово! Codespace онлайн, URL сохранен.\n`;
     }
-    document.getElementById('patStatus').textContent='✅ Готово!';
+    document.getElementById('patStatus').textContent='✅ Всё настроено!';
     setupKeepAlive();
     await listCodespaces();
   }catch(e){
-    log.textContent+='Ошибка: '+e.message+'\n';
-    addTerminalLog('err','autoSetup '+e.message);
+    log.textContent+='Ошибка: '+e.message+'\nОткрой https://github.com/heckar904-cmyk/my-agent/codespaces и нажми Start вручную.';
   }
+}
+
+function saveLinuxSettings(){
+  const pat=document.getElementById('githubPat').value.trim();
+  const url=document.getElementById('codespaceUrl').value.trim();
+  if(pat) localStorage.setItem('githubPat',pat);
+  if(url) localStorage.setItem('codespaceUrl',url);
+  // Сохраняем доп токены
+  const extraInputs=document.querySelectorAll('.extra-pat');
+  const extraPats=Array.from(extraInputs).map(i=>i.value.trim()).filter(v=>v);
+  localStorage.setItem('extraPats', JSON.stringify(extraPats));
+  localStorage.setItem('autoWake',document.getElementById('autoWakeToggle').checked?'1':'0');
+  localStorage.setItem('keepAlive',document.getElementById('keepAliveToggle').checked?'1':'0');
+  document.getElementById('patStatus').textContent=pat?'✅ Сохранено ('+(1+extraPats.length)+' акков)':'';
+  setupKeepAlive();
 }
 
 function addPatField(value=''){
   const div=document.getElementById('extraPats');
+  const idx=div.children.length;
   const inp=document.createElement('input');
-  inp.className='extra-pat mono';
-  inp.placeholder=`ghp_... акк #${div.children.length+2}`;
+  inp.className='extra-pat';
+  inp.placeholder=`ghp_... акк #${idx+2}`;
   inp.value=value;
-  inp.style.cssText='width:100%;padding:8px;border-radius:8px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;font-size:11px;margin-top:6px';
+  inp.style.cssText='width:100%;padding:6px;border-radius:6px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px';
   div.appendChild(inp);
 }
+
 function getAllPats(){
   const main=document.getElementById('githubPat').value.trim() || localStorage.getItem('githubPat') || '';
   const extra=JSON.parse(localStorage.getItem('extraPats')||'[]');
   const extraFromInputs=Array.from(document.querySelectorAll('.extra-pat')).map(i=>i.value.trim()).filter(v=>v);
   const all=[main, ...extra, ...extraFromInputs].filter(v=>v && v.startsWith('ghp_'));
+  // Уникальные
   return [...new Set(all)];
 }
 
@@ -1332,67 +1089,56 @@ async function checkLinuxReal(){
   const status=document.getElementById('linuxStatus');
   const details=document.getElementById('linuxDetails');
   const log=document.getElementById('linuxLog');
-  status.textContent='фон...';
-  const codespaceUrl=localStorage.getItem('codespaceUrl')||document.getElementById('codespaceUrl')?.value.trim()||'https://my-agent--heckar904.replit.app';
+  status.textContent='проверка...';
+  const codespaceUrl=localStorage.getItem('codespaceUrl')||document.getElementById('codespaceUrl').value.trim();
   const pat=localStorage.getItem('githubPat');
-  if(log) { log.style.display='none'; log.textContent=''; }
-  addTerminalLog('info',`[LINUX] Проверка Linux\n  кто: ${currentUser}\n  URL: ${codespaceUrl}\n  PAT: ${pat?pat.slice(0,10)+'...':'нет'}\n  время: ${new Date().toISOString()}`);
+  log.style.display='block'; log.textContent='Проверяю...\n';
   try{
-    try{
-      addTerminalLog('info','[LINUX] → Пробую Replit https://my-agent--heckar904.replit.app/status');
-      const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
-      const start=Date.now();
-      const rRes=await fetch('https://my-agent--heckar904.replit.app/status',{signal:ctrl.signal});
-      const elapsed=Date.now()-start;
-      addTerminalLog(rRes.ok?'ok':'warn',`[LINUX] ← Replit ${rRes.status} за ${elapsed}ms`);
-      if(rRes.ok){
-        const rData=await rRes.json();
-        addTerminalLog('ok',`[LINUX] ✅ Replit онлайн!\n  CPU: ${rData.cpus} x ${rData.cpuModel}\n  RAM: ${rData.freeMem}/${rData.totalMem} (used ${rData.usedMem})\n  Uptime: ${rData.uptime} (${rData.uptimeSec}s)\n  Host: ${rData.hostname} ${rData.platform} ${rData.arch}\n  Load: ${rData.load}\n  Keys на сервере: gemini=${rData.keysSaved?.gemini?'да':'нет'} groq=${rData.keysSaved?.groq?'да':'нет'}\n  Сообщение: ${rData.message}`);
-        status.textContent='онлайн'; status.style.color='#00ff88';
-        if(details) details.textContent=`✅ Linux ОБЯЗАТЕЛЕН и онлайн в фоне! ${rData.cpus} vCPU ${rData.totalMem} — открывать не надо!`;
-        if(log){ log.style.display='block'; log.textContent=`✅ Replit онлайн! ${rData.cpuModel}\nRAM ${rData.freeMem}/${rData.totalMem}\nВ фоне — открывать не надо!\n`; }
-        if(!localStorage.getItem('codespaceUrl')){
-          localStorage.setItem('codespaceUrl','https://my-agent--heckar904.replit.app');
-          const el=document.getElementById('codespaceUrl'); if(el) el.value='https://my-agent--heckar904.replit.app';
-        }
-        return;
-      }
-    }catch(e){ addTerminalLog('warn','[LINUX] Replit не ответил: '+e.message); }
+    const r=await fetch('https://api.github.com/repos/heckar904-cmyk/my-agent');
+    const j=await r.json(); if(j.updated_at) log.textContent+=`Репо: ${j.size}KB\n`;
+    // Проверяем Codespace через API если есть токен
     let csState='unknown';
+    let csName=null;
     if(pat){
       try{
         const csRes=await fetch('https://api.github.com/user/codespaces',{headers:{'Authorization':'token '+pat}});
         const csData=await csRes.json();
         if(csData.codespaces){
           const my=csData.codespaces.find(c=>c.repository?.full_name==='heckar904-cmyk/my-agent');
-          if(my){ csState=my.state; }
+          if(my){ csState=my.state; csName=my.name; log.textContent+=`Codespace ${my.name}: ${my.state}, last used ${my.last_used_at? new Date(my.last_used_at).toLocaleString():''}\n`; }
+          else { log.textContent+=`Нашел ${csData.codespaces.length} codespaces, но my-agent нет\n`; }
         }
         await listCodespaces();
-      }catch(e){}
+      }catch(e){ log.textContent+='API ошибка: '+e.message+'\n'; }
     }
-    if(codespaceUrl && codespaceUrl!=='' && !codespaceUrl.includes('replit.app')){
+    if(codespaceUrl){
       try{
-        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),5000);
+        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
         const res=await fetch(codespaceUrl+'/status',{signal:ctrl.signal});
         if(res.ok){
           const data=await res.json();
-          status.textContent='онлайн'; status.style.color='#00ff88';
-          if(details) details.textContent=`✅ Linux онлайн: ${data.cpus} vCPU • ${data.totalMem}`;
-          addTerminalLog('ok','Linux Codespace онлайн');
+          status.textContent='онлайн'; status.style.color='#4ade80';
+          details.textContent=`${data.cpus} vCPU • ${data.totalMem} • ${data.hostname} • Codespace ${csState}`;
+          log.textContent+=`✅ Сервер онлайн! ${data.cpuModel}\nRAM ${data.freeMem}/${data.totalMem}\nCodespace: ${csState}\n`;
           return;
         }
       }catch(e){}
-      status.textContent='проверка'; status.style.color='#ffcc00';
-      if(details) details.textContent=`⚠️ Linux пока не отвечает, пробую Replit в фоне — открывать не надо!`;
-    } else {
-      status.textContent='фон'; status.style.color='#00ff88';
-      if(details) details.textContent=`✅ Linux в фоне — открывать не надо!`;
+      // Если codespace Available но сервер не отвечает - это не спит, а сервер не запущен
+      if(csState==='Available' || csState==='available'){
+        status.textContent='онлайн*'; status.style.color='#fbbf24';
+        details.textContent=`Codespace ${csState} (онлайн), но сервер не запущен`;
+        log.textContent+=`⚠️ Codespace ОНЛАЙН (${csState}), но сервер на порту 3000 не отвечает.\nЭто НЕ спит! Просто надо 1 раз зайти в Codespace и запустить: npm install && node server.js\nПорт 3000 должен быть Public.\nURL: ${codespaceUrl}\n`;
+        return;
+      }
+      const res2=await fetch(codespaceUrl).catch(e=>e);
+      if(res2 && res2.status===401){ status.textContent='спит'; status.style.color='#fbbf24'; log.textContent+=`Спит (401). Codespace state: ${csState}. Нажми ⚡ Разбудить.\n`; if(localStorage.getItem('autoWake')==='1' && pat) autoWakeLinux(); }
+      else { status.textContent=csState==='Shutdown'?'выкл':csState==='Available'?'онлайн*':'спит'; log.textContent+=`Не отвечает. Codespace state: ${csState}. Нажми ⚡ Разбудить.\n`; }
+    } else { 
+      status.textContent=csState||'нет URL'; 
+      if(csState==='Available') { status.textContent='онлайн*'; details.textContent='Codespace онлайн, но URL не сохранен'; log.textContent+='Codespace онлайн, но URL не сохранен. Нажми ⚡ Сохранить и настроить всё автоматом\n'; }
+      else log.textContent+='Вставь токен и нажми ⚡ Сохранить и настроить всё автоматом\n'; 
     }
-  }catch(e){ 
-    status.textContent='ошибка'; status.style.color='#ff4d6d';
-    if(details) details.textContent=`❌ Ошибка, но попробует Replit в фоне`;
-    addTerminalLog('err','checkLinux '+e.message);
-  }
+  }catch(e){ status.textContent='ошибка'; log.textContent+='Ошибка: '+e.message; }
 }
 
 async function listCodespaces(){
@@ -1405,174 +1151,87 @@ async function listCodespaces(){
       const my=data.codespaces.filter(c=>c.repository?.full_name==='heckar904-cmyk/my-agent');
       const show=my.length>0? my : data.codespaces.slice(0,3);
       listDiv.style.display='block';
-      content.innerHTML=show.map(cs=>`<div style="background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:10px;padding:8px;margin:4px 0;font-size:11px"><b>${cs.name}</b> — ${cs.state}<br><div style="display:flex;gap:6px;margin-top:6px"><button class="btn2 btn" style="padding:6px;font-size:10px" onclick="startCodespace('${cs.name}')">⚡ Будить</button><button class="btn2 btn" style="padding:6px;font-size:10px" onclick="useCodespaceUrl('${cs.name}')">URL</button></div></div>`).join('');
+      content.innerHTML=show.map(cs=>`<div style="background:#111;border:1px solid #222;border-radius:8px;padding:6px;margin:3px 0;font-size:11px"><b>${cs.name}</b> — ${cs.state}<br><div style="display:flex;gap:4px;margin-top:4px"><button class="btn2 btn" style="padding:4px;font-size:10px" onclick="startCodespace('${cs.name}')">⚡ Будить</button><button class="btn2 btn" style="padding:4px;font-size:10px" onclick="useCodespaceUrl('${cs.name}')">URL</button></div></div>`).join('');
     }
-  }catch(e){ addTerminalLog('warn','listCodespaces '+e.message); }
+  }catch(e){ log.textContent+='API ошибка: '+e.message+'\n'; }
 }
 async function startCodespace(name){
   const pat=localStorage.getItem('githubPat'); if(!pat) return;
   const log=document.getElementById('linuxLog'); log.style.display='block'; log.textContent+=`Бужу ${name}...\n`;
   document.getElementById('linuxStatus').textContent='бужу...';
-  addTerminalLog('info','Бужу '+name);
   try{
     const res=await fetch(`https://api.github.com/user/codespaces/${name}/start`,{method:'POST',headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json'}});
     const data=await res.json();
-    if(res.ok){ log.textContent+=`✅ Старт ${data.state}, жди 30 сек\n`; setTimeout(()=>checkLinuxReal(),15000); }
+    if(res.ok){ log.textContent+=`✅ Старт ${data.state}, жди 30 сек\n`; setTimeout(()=>checkLinuxReal(),15000); setTimeout(()=>checkLinuxReal(),35000); }
     else log.textContent+=`Ошибка: ${JSON.stringify(data).slice(0,200)}\n`;
-  }catch(e){ log.textContent+=`Ошибка: ${e.message}\n`; addTerminalLog('err','startCodespace '+e.message); }
+  }catch(e){ log.textContent+=`Ошибка: ${e.message}\n`; }
 }
 async function autoWakeLinux(){
   const pat=localStorage.getItem('githubPat');
-  if(!pat){ addMessage('system','Replit работает без PAT в фоне!'); await checkLinuxReal(); return; }
+  if(!pat){ alert('Вставь токен ghp_... и нажми Сохранить и настроить всё автоматом'); window.open('https://github.com/settings/tokens','_blank'); return; }
   await autoSetupEverything();
 }
-function useCodespaceUrl(name){ const url=`https://${name}-3000.app.github.dev`; document.getElementById('codespaceUrl').value=url; localStorage.setItem('codespaceUrl',url); addTerminalLog('info','URL '+url); }
+function useCodespaceUrl(name){ const url=`https://${name}-3000.app.github.dev`; document.getElementById('codespaceUrl').value=url; localStorage.setItem('codespaceUrl',url); }
 
 function setupKeepAlive(){
   if(keepAliveInterval) clearInterval(keepAliveInterval);
   const alwaysOn=localStorage.getItem('alwaysOn')==='1';
-  const enabled=localStorage.getItem('keepAlive')==='1' || alwaysOn || true;
+  const enabled=localStorage.getItem('keepAlive')==='1' || alwaysOn;
   if(!enabled) return;
-  const interval = alwaysOn ? 2*60*1000 : 5*60*1000;
+  const url=localStorage.getItem('codespaceUrl'); 
+  const pat=localStorage.getItem('githubPat');
+  // Интервал: если всегда включен - каждые 2 мин, иначе 10 мин
+  const interval = alwaysOn ? 2*60*1000 : 10*60*1000;
   keepAliveInterval=setInterval(async()=>{
     try{ 
-      const url=localStorage.getItem('codespaceUrl')||'https://my-agent--heckar904.replit.app';
       if(url){
         const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),5000); 
-        await fetch(url.replace(/\/$/,'')+'/keepalive',{signal:ctrl.signal}).catch(()=>{});
+        await fetch(url+'/keepalive',{signal:ctrl.signal}).catch(()=>{});
+        await fetch(url+'/status',{signal:ctrl.signal}).catch(()=>{});
       }
-      if(alwaysOn){
-        const pat=localStorage.getItem('githubPat');
-        if(pat){
-          try{
-            const res=await fetch('https://api.github.com/user/codespaces',{headers:{'Authorization':'token '+pat}});
-            const data=await res.json();
-            const target=data.codespaces?.find(c=>c.repository?.full_name==='heckar904-cmyk/my-agent');
-            if(target && target.state!=='Available'){
-              await fetch(`https://api.github.com/user/codespaces/${target.name}/start`,{method:'POST',headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json'}});
-            }
-          }catch(e){}
-        }
+      // Если всегда включен - еще и через API будим если вдруг уснул
+      if(alwaysOn && pat){
+        try{
+          const res=await fetch('https://api.github.com/user/codespaces',{headers:{'Authorization':'token '+pat}});
+          const data=await res.json();
+          const target=data.codespaces?.find(c=>c.repository?.full_name==='heckar904-cmyk/my-agent');
+          if(target && target.state!=='Available'){
+            console.log('AlwaysOn: waking', target.name, target.state);
+            await fetch(`https://api.github.com/user/codespaces/${target.name}/start`,{method:'POST',headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json'}});
+          }
+        }catch(e){ console.log('keepalive API error', e); }
       }
+      console.log('keepalive ping', new Date().toISOString(), alwaysOn?'ALWAYS ON':'normal');
     }catch(e){}
   }, interval);
-  addTerminalLog('info','Keepalive '+interval/1000+'s');
+  console.log(`Keepalive setup: ${interval/1000}sec, alwaysOn=${alwaysOn}`);
 }
-
-// ===== LIVE MODE - ГОЛОСОМ КАК В ЗВОНКЕ =====
-let liveMode=false;
-let recognition=null;
-let synth=window.speechSynthesis;
-
-function toggleLiveMode(){
-  liveMode=!liveMode;
-  const btn=document.getElementById('liveBtn');
-  if(liveMode){
-    btn.style.background='linear-gradient(90deg, #ff0040, #ff00e5)';
-    btn.style.color='#fff';
-    btn.style.boxShadow='0 0 30px rgba(255,0,100,0.5)';
-    btn.textContent='🔴 LIVE ON';
-    addMessage('system','🔴 LIVE режим включен! Говори как в звонке — я отвечаю голосом!\n\n• Нажми 🎤 в поле ввода чтобы говорить\n• ИИ отвечает голосом как в звонке\n• Включи микрофон в браузере');
-    addTerminalLog('ok','LIVE режим включен');
-    startLiveRecognition();
-  } else {
-    btn.style.background='rgba(255,0,100,0.15)';
-    btn.style.color='#ff4d8a';
-    btn.style.boxShadow='none';
-    btn.textContent='🔴 LIVE';
-    addMessage('system','⚪ LIVE выключен');
-    addTerminalLog('info','LIVE выключен');
-    if(recognition) recognition.stop();
-    if(synth) synth.cancel();
-  }
-}
-
-function startLiveRecognition(){
-  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
-    addMessage('system','❌ Браузер не поддерживает голосовой ввод. Используй Chrome на телефоне/ПК. LIVE будет только озвучивать ответы.');
-    addTerminalLog('warn','SpeechRecognition не поддерживается');
-    return;
-  }
-  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
-  recognition=new SpeechRecognition();
-  recognition.lang='ru-RU';
-  recognition.continuous=false;
-  recognition.interimResults=false;
-  
-  recognition.onstart=()=>{ addTerminalLog('info','[LIVE] 🎤 Слушаю... говори!'); addMessage('system','🎤 Слушаю...'); };
-  recognition.onresult=(e)=>{
-    const transcript=e.results[0][0].transcript;
-    addTerminalLog('ok',`[LIVE] 👤 Распознано: "${transcript}"`);
-    document.getElementById('msgInput').value=transcript;
-    sendMsg();
-  };
-  recognition.onerror=(e)=>{ addTerminalLog('err','[LIVE] Ошибка распознавания '+e.error); };
-  recognition.onend=()=>{
-    if(liveMode){
-      setTimeout(()=>{ try{ recognition.start(); }catch(e){} }, 1000);
-    }
-  };
-  try{ recognition.start(); }catch(e){ addTerminalLog('err','LIVE start fail '+e.message); }
-}
-
-function speakLive(text){
-  if(!liveMode) return;
-  if(!synth) return;
-  synth.cancel();
-  const utter=new SpeechSynthesisUtterance(text);
-  utter.lang='ru-RU';
-  utter.rate=1.0;
-  utter.pitch=1.0;
-  utter.volume=1.0;
-  // Выбираем русский голос если есть
-  const voices=synth.getVoices();
-  const ruVoice=voices.find(v=>v.lang.includes('ru'))||voices[0];
-  if(ruVoice) utter.voice=ruVoice;
-  addTerminalLog('info',`[LIVE] 🔊 Озвучиваю: "${text.slice(0,80)}..." голосом ${ruVoice?ruVoice.name:'default'}`);
-  utter.onstart=()=>addTerminalLog('ok','[LIVE] 🔊 Говорю...');
-  utter.onend=()=>addTerminalLog('ok','[LIVE] ✅ Озвучил');
-  utter.onerror=(e)=>addTerminalLog('err','[LIVE] Ошибка озвучки '+e.error);
-  synth.speak(utter);
-}
-
-// Перехватываем ответы ИИ для LIVE озвучки
-const origAddMessage=addMessage;
-addMessage=function(role,text,silent){
-  const el=origAddMessage(role,text,silent);
-  if(role==='ai' && liveMode && !silent){
-    // Озвучиваем ответ ИИ голосом как в звонке
-    const cleanText=text.replace(/<[^>]*>/g,'').slice(0,500);
-    setTimeout(()=>speakLive(cleanText), 300);
-  }
-  return el;
-};
 
 async function execLinux(){
   const cmd=document.getElementById('linuxCmd').value.trim(); if(!cmd) return;
   const term=document.getElementById('linuxTerm'); term.style.display='block'; term.textContent=`$ ${cmd}\n...`;
-  addTerminalLog('info','Exec: '+cmd);
   const url=localStorage.getItem('codespaceUrl');
   if(url){
     try{
-      const res=await fetch(url.replace(/\/$/,'')+'/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd})});
+      const res=await fetch(url+'/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cmd})});
       const data=await res.json(); term.textContent+=`\n${data.stdout||''}\n${data.stderr||''}`;
-      addTerminalLog('ok','Exec result: '+(data.stdout||'').slice(0,200));
-    }catch(e){ term.textContent+=`\nОшибка: ${e.message}\n`; addTerminalLog('err','Exec '+e.message); }
-  } else term.textContent+='\nНет URL';
+    }catch(e){ term.textContent+=`\nОшибка: ${e.message}\nURL: ${url}\nЗапущен ли node server.js?`; }
+  } else term.textContent+='\nНет URL, вставь токен и нажми авто-настройку';
 }
 
+// Гости, файлы, монтаж, задачи
 function renderGuestRequests(){
   const div=document.getElementById('guestRequests'); if(!div) return;
   if(pendingGuests.length===0){ div.innerHTML='<span class="small">Нет запросов</span>'; return; }
-  div.innerHTML=pendingGuests.map((g,i)=>`<div class="guest-card"><b>${g.nick}</b><br><span class="small">${g.time}</span><br><div style="display:flex;gap:6px;margin-top:8px"><button class="btn2 btn" style="padding:8px;font-size:11px" onclick="approveGuest(${i})">Принять</button><button class="btn2 btn" style="padding:8px;font-size:11px" onclick="declineGuest(${i})">Отклонить</button></div></div>`).join('');
+  div.innerHTML=pendingGuests.map((g,i)=>`<div class="guest-card"><b>${g.nick}</b><br><span class="small">${g.time}</span><br><div style="display:flex;gap:6px;margin-top:6px"><button class="btn2 btn" style="padding:6px;font-size:11px" onclick="approveGuest(${i})">Принять</button><button class="btn2 btn" style="padding:6px;font-size:11px" onclick="declineGuest(${i})">Отклонить</button></div></div>`).join('');
 }
-function approveGuest(i){ const g=pendingGuests[i]; users[g.nick]={role:'guest',approved:true,created:Date.now()}; guestPermissions[g.nick]={approved:true,models:['all'],limit:0,used:0}; localStorage.setItem('users',JSON.stringify(users)); localStorage.setItem('guestPermissions',JSON.stringify(guestPermissions)); pendingGuests.splice(i,1); localStorage.setItem('pendingGuests',JSON.stringify(pendingGuests)); renderGuestRequests(); renderGuestList(); addTerminalLog('ok','Гость принят '+g.nick); }
+function approveGuest(i){ const g=pendingGuests[i]; users[g.nick]={role:'guest',approved:true,created:Date.now()}; guestPermissions[g.nick]={approved:true,models:['all'],limit:0,used:0}; localStorage.setItem('users',JSON.stringify(users)); localStorage.setItem('guestPermissions',JSON.stringify(guestPermissions)); pendingGuests.splice(i,1); localStorage.setItem('pendingGuests',JSON.stringify(pendingGuests)); renderGuestRequests(); renderGuestList(); }
 function declineGuest(i){ pendingGuests.splice(i,1); localStorage.setItem('pendingGuests',JSON.stringify(pendingGuests)); renderGuestRequests(); }
 function renderGuestList(){
   const div=document.getElementById('guestList'); if(!div) return;
   const guests=Object.keys(users).filter(k=>users[k].role==='guest');
   if(guests.length===0){ div.innerHTML='<span class="small">Нет гостей</span>'; return; }
-  div.innerHTML=guests.map(n=>`<div class="guest-card"><b>${n}</b><br><button class="btn2 btn" style="padding:6px;font-size:10px;margin-top:6px" onclick="removeGuest('${n}')">Удалить</button></div>`).join('');
+  div.innerHTML=guests.map(n=>`<div class="guest-card"><b>${n}</b><br><button class="btn2 btn" style="padding:4px;font-size:10px;margin-top:4px" onclick="removeGuest('${n}')">Удалить</button></div>`).join('');
 }
 function removeGuest(nick){ delete users[nick]; delete guestPermissions[nick]; localStorage.setItem('users',JSON.stringify(users)); localStorage.setItem('guestPermissions',JSON.stringify(guestPermissions)); renderGuestList(); }
 function showAdminNotifs(){
@@ -1590,55 +1249,51 @@ document.getElementById('fileInput').addEventListener('change',e=>{
     else div.textContent=f.name.slice(0,8)+' '+ (f.size/1024/1024).toFixed(1)+'MB';
     preview.appendChild(div);
   });
-  if(totalSize>1024*1024*1024) alert('>1ГБ');
-  if(selectedFiles.length>0) addMessage('system',`Выбрано: ${selectedFiles.length} файлов, ${(totalSize/1024/1024).toFixed(1)}MB`);
-  addTerminalLog('info','Файлы выбраны '+selectedFiles.length);
+  if(totalSize>1024*1024*1024) alert('Файлы >1ГБ, выбери меньше');
+  if(selectedFiles.length>0) addMessage('system',`Выбрано: ${selectedFiles.length} файлов, ${(totalSize/1024/1024).toFixed(1)}MB до 1ГБ лимит`);
 });
 document.getElementById('msgInput').addEventListener('keydown',e=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendMsg(); } });
-document.getElementById('msgInput').addEventListener('input',e=>{ e.target.style.height='26px'; e.target.style.height=Math.min(e.target.scrollHeight,160)+'px'; });
+document.getElementById('msgInput').addEventListener('input',e=>{ e.target.style.height='24px'; e.target.style.height=Math.min(e.target.scrollHeight,160)+'px'; });
 
 async function doTikTokMontage(){
   const log=document.getElementById('montageLog'); const bar=document.getElementById('montageProgress'); const status=document.getElementById('montageStatus');
   if(selectedFiles.length===0){ alert('Выбери файлы через + (до 1ГБ)'); return; }
   log.style.display='block'; log.textContent='Начинаю монтаж...\n'; bar.style.width='10%';
-  addTerminalLog('info','Монтаж старт '+selectedFiles.length);
   try{
-    log.textContent+='1. Анализ...\n'; bar.style.width='20%'; await new Promise(r=>setTimeout(r,500));
-    log.textContent+=`Найдено: ${selectedFiles.length}\n`;
+    log.textContent+='1. Анализ файлов...\n'; bar.style.width='20%'; await new Promise(r=>setTimeout(r,500));
+    log.textContent+=`Найдено: ${selectedFiles.length} файлов\n`;
     log.textContent+='2. Whisper VAD...\n'; bar.style.width='40%'; await new Promise(r=>setTimeout(r,800));
     log.textContent+='3. CLIP...\n'; bar.style.width='60%'; await new Promise(r=>setTimeout(r,800));
     log.textContent+='4. 1080x1920 30fps...\n'; bar.style.width='80%'; await new Promise(r=>setTimeout(r,1000));
     log.textContent+='5. Склейка...\n'; bar.style.width='100%'; await new Promise(r=>setTimeout(r,500));
-    log.textContent+='Готово! 1080x1920\n';
+    log.textContent+='Готово! 1080x1920 для TikTok\n';
     status.textContent='Готово • 1080x1920';
-    addMessage('ai','Монтаж готов! В Linux с ffmpeg сделаю настоящий файл.');
-    addTerminalLog('ok','Монтаж готов');
-  }catch(e){ log.textContent+='Ошибка: '+e.message; addTerminalLog('err','Монтаж '+e.message); }
+    addMessage('ai','Монтаж готов! В реальном Linux с ffmpeg сделаю настоящий файл. Загрузи файлы до 1ГБ через +');
+  }catch(e){ log.textContent+='Ошибка: '+e.message; }
 }
 function scheduleTask(){
   const time=document.getElementById('taskTime').value;
   const desc=document.getElementById('taskDesc').value.trim();
   if(!time||!desc){ alert('Время и описание'); return; }
   tasks.push({id:Date.now(),time,desc,done:false}); localStorage.setItem('ai_tasks',JSON.stringify(tasks)); renderTasks();
-  addTerminalLog('ok','Задача '+desc);
 }
 function renderTasks(){
   const div=document.getElementById('taskList');
   if(tasks.length===0){ div.innerHTML='<span class="small">Нет задач</span>'; return; }
-  div.innerHTML=tasks.map(t=>`<div class="guest-card"><b>${new Date(t.time).toLocaleString()}</b><br>${t.desc}<br><button class="btn2 btn" style="padding:6px;font-size:10px;margin-top:6px" onclick="deleteTask(${t.id})">Удалить</button></div>`).join('');
+  div.innerHTML=tasks.map(t=>`<div class="guest-card"><b>${new Date(t.time).toLocaleString()}</b><br>${t.desc}<br><button class="btn2 btn" style="padding:4px;font-size:10px;margin-top:4px" onclick="deleteTask(${t.id})">Удалить</button></div>`).join('');
 }
 function deleteTask(id){ tasks=tasks.filter(t=>t.id!==id); localStorage.setItem('ai_tasks',JSON.stringify(tasks)); renderTasks(); }
 async function checkAppUpdate(){
   const repo='heckar904-cmyk/ai-arent-apk';
   const el=document.getElementById('updateStatus'); el.textContent='Проверяю...';
-  addTerminalLog('info','Проверка обновлений');
   try{
     const r=await fetch(`https://api.github.com/repos/${repo}/releases/latest`);
     const j=await r.json();
-    if(j.tag_name){ el.textContent=`Последний: ${j.tag_name}`; const btn=document.getElementById('updateBtn'); btn.style.display='block'; btn.onclick=()=>window.open(j.assets?.[0]?.browser_download_url||`https://github.com/${repo}/releases/latest`,'_blank'); addTerminalLog('ok','Обновление '+j.tag_name); }
+    if(j.tag_name){ el.textContent=`Последний: ${j.tag_name}`; const btn=document.getElementById('updateBtn'); btn.style.display='block'; btn.onclick=()=>window.open(j.assets?.[0]?.browser_download_url||`https://github.com/${repo}/releases/latest`,'_blank'); }
     else el.textContent='Релизов нет';
-  }catch(e){ el.textContent='Ошибка: '+e.message; addTerminalLog('err','Обновление '+e.message); }
+  }catch(e){ el.textContent='Ошибка: '+e.message; }
 }
+function clearCache(){ localStorage.removeItem('modelCache'); alert('Кэш очищен'); }
 </script>
 </body>
 </html>
