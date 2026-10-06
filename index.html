@@ -141,10 +141,10 @@ body{display:flex}
 <button class="btn2 btn" style="padding:6px;font-size:11px;flex:1" onclick="checkLinuxReal()">Проверить</button>
 </div>
 <div style="margin-top:6px">
-<div class="switch" style="padding:8px;font-size:12px;background:#2a1a1a;border-color:#5a2a2a"><span>🔥 Всегда включен 24/7</span><input type="checkbox" id="alwaysOnToggle"></div>
-<div class="small" style="color:#f88;margin-top:2px">Тратит 60ч/мес бесплатно, потом $0.18/ч. Если включено - не спит никогда!</div>
-<div class="switch" style="padding:6px;font-size:11px"><span>Авто-пробуждение при входе</span><input type="checkbox" id="autoWakeToggle" checked></div>
-<div class="switch" style="padding:6px;font-size:11px"><span>Keepalive (пинг 2 мин)</span><input type="checkbox" id="keepAliveToggle"></div>
+<div class="switch" style="padding:6px;font-size:11px"><span>Авто-пробуждение при входе (бесплатно)</span><input type="checkbox" id="autoWakeToggle" checked></div>
+<div class="switch" style="padding:6px;font-size:11px"><span>Держать онлайн пока сайт открыт</span><input type="checkbox" id="keepAliveToggle" checked></div>
+<div class="small" style="color:#4ade80;margin-top:4px">✅ БЕСПЛАТНО: 60 часов в месяц, 2 vCPU 1.9GB. Спит через 30 мин бездействия (правило GitHub), просыпается сам когда заходишь на сайт. Ничего не тратит когда не пользуешься!</div>
+<details style="margin-top:6px"><summary class="small" style="cursor:pointer;color:#888">Хочешь 24/7 без сна? (платно после 60ч)</summary><div class="switch" style="padding:6px;font-size:11px;background:#2a1a1a;border-color:#333"><span>🔥 Всегда включен 24/7</span><input type="checkbox" id="alwaysOnToggle"></div><div class="small" style="color:#f88">Если включишь - будет работать 24/7 даже когда сайт закрыт, но потратит 720ч/мес (~$120). GitHub Action каждые 10 мин будет будить. Для бесплатного оставь выключенным!</div></details>
 </div>
 <div id="codespaceList" style="margin-top:6px;display:none">
 <div class="small" style="color:#aaa">Codespaces:</div>
