@@ -343,8 +343,10 @@ body{background:
 <div class="card">
 <b>🔑 API ключи • Авто-сохранение 3 уровня</b>
 <div class="small" style="color:var(--neon-green)">Вводишь — сразу сохраняется: локально + облако Gist + сервер Replit! Никогда не пропадет!</div>
-<input id="geminiKey" placeholder="AIza... Gemini" style="width:100%;padding:12px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;margin:6px 0" class="mono">
+<input id="geminiKey" placeholder="AIza... Gemini (основной, 50 моделей)" style="width:100%;padding:12px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;margin:6px 0" class="mono">
 <input id="groqKey" placeholder="gsk_... Groq запасной" style="width:100%;padding:12px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid var(--border);color:#fff;margin:6px 0" class="mono">
+<input id="freeModelKey" placeholder="cc_... FreeModel бесплатный (много моделей в месяц)" style="width:100%;padding:12px;border-radius:10px;background:rgba(0,0,0,0.4);border:1px solid rgba(255,0,229,0.3);color:#fff;margin:6px 0" class="mono">
+<div class="small" style="color:var(--muted)">cc_ ключ с freemodel.dev — дает много моделей в месяц бесплатно, проверю какие открывает</div>
 <button class="btn2 btn" onclick="saveKeys()">💾 Сохранить (авто и так сохраняет)</button>
 <div class="small" id="keyStatus" style="margin-top:8px"></div>
 </div>
@@ -642,12 +644,15 @@ function initApp(){
   if(!localStorage.getItem('codespaceUrl')) localStorage.setItem('codespaceUrl', defaultReplitUrl);
   const savedGemini=localStorage.getItem('gemini')||'';
   const savedGroq=localStorage.getItem('groq')||'';
+  const savedFM=localStorage.getItem('freemodel')||localStorage.getItem('cc_key')||'';
   document.getElementById('geminiKey').value=savedGemini;
   document.getElementById('groqKey').value=savedGroq;
+  const fmEl=document.getElementById('freeModelKey'); if(fmEl) fmEl.value=savedFM;
   document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||defaultReplitUrl;
   document.getElementById('githubPat').value=localStorage.getItem('githubPat')||'';
   document.getElementById('geminiKey').addEventListener('input',e=>{ localStorage.setItem('gemini', e.target.value.trim()); checkKeys(); debouncedAutoSave(); });
   document.getElementById('groqKey').addEventListener('input',e=>{ localStorage.setItem('groq', e.target.value.trim()); debouncedAutoSave(); });
+  const fmInput=document.getElementById('freeModelKey'); if(fmInput) fmInput.addEventListener('input',e=>{ localStorage.setItem('freemodel', e.target.value.trim()); localStorage.setItem('cc_key', e.target.value.trim()); checkKeys(); debouncedAutoSave(); loadModels(); });
   document.getElementById('githubPat').addEventListener('input',e=>{ localStorage.setItem('githubPat', e.target.value.trim()); debouncedAutoSave(); });
   document.getElementById('codespaceUrl').addEventListener('input',e=>{ localStorage.setItem('codespaceUrl', e.target.value.trim()); debouncedAutoSave(); });
   
@@ -691,10 +696,7 @@ function initApp(){
     }
     checkKeys(); loadModels();
   })();
-  const curEl=document.getElementById('curModel'); if(curEl) curEl.textContent=currentModel;
-  const topEl=document.getElementById('topModel'); if(topEl) topEl.textContent=currentModel.replace('gemini-','').slice(0,12);
-  const topSel=document.getElementById('topModelSelect'); if(topSel) topSel.value=currentModel;
-  document.getElementById('appVersion').textContent='2.3-neon-fix-alignment-models-nolag';
+  document.getElementById('appVersion').textContent='2.4-neon-cc-key-real-models';
   setupKeepAlive();
   if(localStorage.getItem('autoWake')!=='0' && localStorage.getItem('githubPat')){
     setTimeout(()=>{ 
@@ -793,8 +795,10 @@ function switchMode(m){
 function saveKeys(){
   const g=document.getElementById('geminiKey').value.trim();
   const groq=document.getElementById('groqKey').value.trim();
+  const fm=document.getElementById('freeModelKey')?.value.trim()||'';
   if(g) localStorage.setItem('gemini',g);
   if(groq) localStorage.setItem('groq',groq);
+  if(fm) { localStorage.setItem('freemodel',fm); localStorage.setItem('cc_key',fm); }
   const url=document.getElementById('codespaceUrl').value.trim();
   const pat=document.getElementById('githubPat').value.trim();
   if(url) localStorage.setItem('codespaceUrl',url);
@@ -804,7 +808,7 @@ function saveKeys(){
   localStorage.setItem('extraPats', JSON.stringify(extraPats));
   checkKeys(); loadModels();
   addMessage('system','✅ Ключи сохранены: локально + облако Gist + сервер Replit! Никогда не пропадут!');
-  addTerminalLog('ok','Ключи сохранены вручную');
+  addTerminalLog('ok','Ключи сохранены вручную, fm='+(fm?fm.slice(0,8)+'...':'нет'));
   syncKeysToCloud();
   saveToServer();
 }
@@ -893,18 +897,47 @@ function checkKeys(){
 async function loadModels(){
   const groqKey=localStorage.getItem('groq');
   const geminiKey=localStorage.getItem('gemini');
+  const freeModelKey=localStorage.getItem('freemodel')||localStorage.getItem('cc_key')||'';
   const div=document.getElementById('modelList');
   const topSelect=document.getElementById('topModelSelect');
   let html='';
   const stablePriority=["gemini-2.0-flash","gemini-1.5-flash","gemini-1.5-flash-8b","gemini-flash-latest","gemini-2.5-flash-lite","gemini-2.5-flash","gemini-2.5-pro","gemini-3-flash-preview"];
   
-  // Если ключа нет — не показываем фейковые модели!
-  if(!geminiKey && !groqKey){
-    html='<span class="small" style="color:#ff4d6d">❌ Нет API ключа! Введи Gemini ключ в ⚙️ Настройки → API ключи<br>Ключ должен начинаться с AIzaSy...<br>Без ключа модели не покажутся — это не фейк!</span>';
-    if(topSelect){ topSelect.innerHTML='<option>Нет ключа</option>'; }
+  if(!geminiKey && !groqKey && !freeModelKey){
+    html='<span class="small" style="color:#ff4d6d">❌ Нет API ключа! Введи Gemini ключ в ⚙️ Настройки → API ключи<br>Ключ должен начинаться с AIzaSy...<br>Без ключа модели не покажутся — это не фейк, это честно!</span>';
+    if(topSelect){ topSelect.innerHTML='<option value="">❌ Нет ключа — введи в ⚙️</option>'; }
     div.innerHTML=html;
-    addTerminalLog('warn','loadModels: нет ключей, не показываю фейковые модели');
+    addTerminalLog('warn','loadModels: нет ключей');
     return;
+  }
+
+  // FreeModel cc_ keys
+  if(freeModelKey){
+    try{
+      addTerminalLog('info',`[MODELS] → FreeModel check cc_ key ${freeModelKey.slice(0,8)}...`);
+      const r=await fetch('https://api.freemodel.dev/v1/models',{headers:{'Authorization':'Bearer '+freeModelKey}});
+      const j=await r.json();
+      if(j.data && j.data.length>0){
+        html+=`<div class="small">✅ FreeModel (${freeModelKey.slice(0,8)}...): ${j.data.length} моделей:</div>`;
+        j.data.slice(0,20).forEach(m=>{ 
+          const id=m.id;
+          html+=`<span class="badge ${('freemodel/'+id)===currentModel?'active':''}" onclick="selectModel('freemodel/${id}')">${id.slice(0,20)}</span>`; 
+        });
+        if(topSelect){
+          j.data.slice(0,30).forEach(m=>{
+            const opt=document.createElement('option');
+            opt.value='freemodel/'+m.id;
+            opt.textContent=m.id+' (FreeModel)';
+            if(('freemodel/'+m.id)===currentModel) opt.selected=true;
+            topSelect.appendChild(opt);
+          });
+        }
+        addTerminalLog('ok',`[MODELS] FreeModel ${j.data.length} моделей`);
+      } else {
+        html+=`<div class="small" style="color:#ffcc00">⚠️ FreeModel ключ ${freeModelKey.slice(0,8)}... не вернул модели или невалидный. Попробуй пересоздать на freemodel.dev</div>`;
+        addTerminalLog('warn','FreeModel no models');
+      }
+    }catch(e){ addTerminalLog('warn','FreeModel check fail '+e.message); }
   }
 
   if(geminiKey){
@@ -986,9 +1019,33 @@ function selectModel(m){
 async function callAI(prompt, retryCount=0){
   const geminiKey=localStorage.getItem('gemini');
   const groqKey=localStorage.getItem('groq');
+  const freeModelKey=localStorage.getItem('freemodel')||localStorage.getItem('cc_key')||'';
   let model=currentModel;
   const fallbackChain=["gemini-2.0-flash","gemini-1.5-flash","gemini-1.5-flash-8b","gemini-flash-latest","groq/llama-3.1-8b-instant"];
   async function tryModel(mdl){
+    if(mdl.startsWith('freemodel/')){
+      if(!freeModelKey) throw new Error('Нет FreeModel cc_ ключа');
+      const id=mdl.replace('freemodel/','');
+      addTerminalLog('info',`[AI] → FreeModel API\n  кто: ${currentUser}\n  модель: ${id}\n  ключ: ${freeModelKey.slice(0,8)}... (${freeModelKey.length} chars)\n  промпт: ${prompt.length} chars\n  URL: https://api.freemodel.dev/v1/chat/completions`);
+      // Пробуем несколько эндпоинтов FreeModel
+      const endpoints=[
+        'https://api.freemodel.dev/v1/chat/completions',
+        'https://vip-sg.freemodel.dev/v1/chat/completions'
+      ];
+      let lastErr=null;
+      for(const ep of endpoints){
+        try{
+          const res=await fetch(ep,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+freeModelKey},body:JSON.stringify({model:id,messages:[{role:'user',content:prompt}],temperature:0.7,max_tokens:2048})});
+          const data=await res.json();
+          addTerminalLog(res.ok?'ok':'err',`[AI] ← FreeModel ${ep} ${res.status}\n  ${JSON.stringify(data).slice(0,500)}`);
+          if(!res.ok) { lastErr=data.error?.message||JSON.stringify(data).slice(0,300); continue; }
+          const out=data.choices?.[0]?.message?.content||data.response||'Нет ответа';
+          addTerminalLog('ok',`[AI] FreeModel вернул ${out.length} chars`);
+          return out;
+        }catch(e){ lastErr=e.message; addTerminalLog('warn','FreeModel endpoint fail '+ep+' '+e.message); }
+      }
+      throw new Error(lastErr||'FreeModel error - ключ cc_ невалидный для чата, только список моделей. Пересоздай на freemodel.dev');
+    }
     if(mdl.startsWith('groq/')){
       if(!groqKey) throw new Error('Нет Groq ключа');
       const id=mdl.replace('groq/','');
