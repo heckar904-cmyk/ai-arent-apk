@@ -129,11 +129,15 @@ body{display:flex}
 <div class="log" id="linuxLog" style="display:none;margin-top:6px"></div>
 
 <div style="margin-top:8px;background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:8px">
-<div class="small" style="color:#fff;font-weight:600">GitHub токен (1 раз вставь и всё само)</div>
-<input id="githubPat" placeholder="ghp_... вставь сюда" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
+<div class="small" style="color:#fff;font-weight:600">GitHub токены (60ч бесплатно на акк, можно много акков)</div>
+<div class="small" style="color:#888">Когда 60ч кончатся на одном - сайт сам переключится на следующий акк. 3 акка = 180ч = почти 24/7 бесплатно!</div>
+<input id="githubPat" placeholder="ghp_... основной токен" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
+<div id="extraPats" style="margin-top:4px"></div>
+<button class="btn2 btn" style="padding:6px;font-size:11px;margin-top:4px" onclick="addPatField()">+ Добавить еще акк (для ротации)</button>
 <input id="codespaceUrl" placeholder="авто-найдет URL" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
 <button class="btn" style="padding:8px;font-size:12px;margin-top:6px" onclick="saveAndAutoSetup()">⚡ Сохранить и настроить всё автоматом</button>
 <div class="small" id="patStatus" style="margin-top:4px;color:#4ade80"></div>
+<div class="small" style="margin-top:6px;color:#4ade80">💡 Лайфхак: создай 2-3 GitHub акка, каждый даст 60ч. Когда 1 кончится - сайт сам переключится! А еще есть Oracle Cloud - 4 vCPU 24GB НАВСЕГДА бесплатно, не 60ч а навсегда! И Replit, Gitpod 50ч, Railway, Fly.io</div>
 </div>
 
 <div style="display:flex;gap:4px;margin-top:6px">
@@ -335,6 +339,9 @@ function initApp(){
   document.getElementById('groqKey').value=localStorage.getItem('groq')||'';
   document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||'';
   document.getElementById('githubPat').value=localStorage.getItem('githubPat')||'';
+  // Загружаем доп токены
+  const extraPats=JSON.parse(localStorage.getItem('extraPats')||'[]');
+  extraPats.forEach((pat,i)=>{ addPatField(pat); });
   document.getElementById('autoWakeToggle').checked=localStorage.getItem('autoWake')!=='0';
   document.getElementById('keepAliveToggle').checked=localStorage.getItem('keepAlive')==='1' || localStorage.getItem('alwaysOn')==='1';
   document.getElementById('alwaysOnToggle').checked=localStorage.getItem('alwaysOn')==='1';
@@ -542,33 +549,48 @@ async function sendMsg(){
   }catch(e){ bubble.textContent='Ошибка: '+e.message; }
 }
 
-// ===== LINUX AUTO SETUP FULL =====
+// ===== LINUX AUTO SETUP FULL + MULTI-ACCOUNT ROTATION =====
 async function saveAndAutoSetup(){
-  const pat=document.getElementById('githubPat').value.trim();
+  let pat=document.getElementById('githubPat').value.trim();
   const url=document.getElementById('codespaceUrl').value.trim();
   if(!pat){ alert('Вставь GitHub токен ghp_... Создать: github.com/settings/tokens → Generate classic → галочки repo, codespace, workflow'); window.open('https://github.com/settings/tokens','_blank'); return; }
   localStorage.setItem('githubPat',pat);
+  const extraInputs=document.querySelectorAll('.extra-pat');
+  const extraPats=Array.from(extraInputs).map(i=>i.value.trim()).filter(v=>v);
+  localStorage.setItem('extraPats', JSON.stringify(extraPats));
   if(url) localStorage.setItem('codespaceUrl',url);
   localStorage.setItem('autoWake','1');
   localStorage.setItem('keepAlive','1');
   document.getElementById('autoWakeToggle').checked=true;
   document.getElementById('keepAliveToggle').checked=true;
-  document.getElementById('patStatus').textContent='✅ Сохранено, настраиваю всё автоматом...';
-  addMessage('system','Сохранил токен, сейчас всё настрою автоматом: найду Codespace, разбужу, открою порт 3000, запущу сервер...');
+  const allCount=1+extraPats.length;
+  document.getElementById('patStatus').textContent=`✅ Сохранено ${allCount} акков, настраиваю...`;
+  addMessage('system',`Сохранил ${allCount} GitHub акков. Когда 60ч кончатся на одном - автоматом переключусь! Сейчас настрою...`);
   await autoSetupEverything();
 }
 
 async function autoSetupEverything(){
-  const pat=localStorage.getItem('githubPat');
-  if(!pat){ alert('Вставь GitHub токен ghp_... Создать: github.com/settings/tokens → Generate classic → галочки repo, codespace, workflow'); window.open('https://github.com/settings/tokens','_blank'); return; }
+  const allPats=getAllPats();
+  if(allPats.length===0){ alert('Вставь GitHub токен ghp_...'); window.open('https://github.com/settings/tokens','_blank'); return; }
   const log=document.getElementById('linuxLog');
   log.style.display='block';
-  log.textContent='🤖 Авто-настройка всего (твой токен)...\n';
+  log.textContent=`🤖 Авто-настройка с ротацией ${allPats.length} акков (обман лимита)...\n`;
+  let pat=null;
+  let data=null;
+  for(let pi=0; pi<allPats.length; pi++){
+    pat=allPats[pi];
+    log.textContent+=`Пробую акк #${pi+1} (${pat.slice(0,10)}...)\n`;
+    try{
+      const res=await fetch('https://api.github.com/user/codespaces',{headers:{'Authorization':'token '+pat}});
+      const j=await res.json();
+      if(j.message && j.message.includes('Bad credentials')){ log.textContent+=`❌ Токен #${pi+1} невалидный\n`; continue; }
+      if(j.codespaces){ data=j; log.textContent+=`✅ Акк #${pi+1} рабочий, ${j.codespaces.length} codespaces\n`; break; }
+      if(j.message && j.message.toLowerCase().includes('limit')){ log.textContent+=`⚠️ Акк #${pi+1} лимит кончился (60ч), пробую следующий\n`; continue; }
+    }catch(e){ log.textContent+=`Ошибка акка #${pi+1}: ${e.message}\n`; }
+  }
+  if(!data){ log.textContent+='❌ Ни один токен не сработал\n'; return; }
   try{
-    // 1. Ищем codespaces
     log.textContent+='1. Ищу Codespaces...\n';
-    const res=await fetch('https://api.github.com/user/codespaces',{headers:{'Authorization':'token '+pat}});
-    const data=await res.json();
     let target=null;
     if(data.codespaces){
       target=data.codespaces.find(c=>c.repository?.full_name==='heckar904-cmyk/my-agent') || data.codespaces[0];
@@ -681,10 +703,34 @@ function saveLinuxSettings(){
   const url=document.getElementById('codespaceUrl').value.trim();
   if(pat) localStorage.setItem('githubPat',pat);
   if(url) localStorage.setItem('codespaceUrl',url);
+  // Сохраняем доп токены
+  const extraInputs=document.querySelectorAll('.extra-pat');
+  const extraPats=Array.from(extraInputs).map(i=>i.value.trim()).filter(v=>v);
+  localStorage.setItem('extraPats', JSON.stringify(extraPats));
   localStorage.setItem('autoWake',document.getElementById('autoWakeToggle').checked?'1':'0');
   localStorage.setItem('keepAlive',document.getElementById('keepAliveToggle').checked?'1':'0');
-  document.getElementById('patStatus').textContent=pat?'✅ Сохранено':'';
+  document.getElementById('patStatus').textContent=pat?'✅ Сохранено ('+(1+extraPats.length)+' акков)':'';
   setupKeepAlive();
+}
+
+function addPatField(value=''){
+  const div=document.getElementById('extraPats');
+  const idx=div.children.length;
+  const inp=document.createElement('input');
+  inp.className='extra-pat';
+  inp.placeholder=`ghp_... акк #${idx+2}`;
+  inp.value=value;
+  inp.style.cssText='width:100%;padding:6px;border-radius:6px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px';
+  div.appendChild(inp);
+}
+
+function getAllPats(){
+  const main=document.getElementById('githubPat').value.trim() || localStorage.getItem('githubPat') || '';
+  const extra=JSON.parse(localStorage.getItem('extraPats')||'[]');
+  const extraFromInputs=Array.from(document.querySelectorAll('.extra-pat')).map(i=>i.value.trim()).filter(v=>v);
+  const all=[main, ...extra, ...extraFromInputs].filter(v=>v && v.startsWith('ghp_'));
+  // Уникальные
+  return [...new Set(all)];
 }
 
 async function checkLinuxReal(){
