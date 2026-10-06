@@ -401,6 +401,7 @@ let chats=JSON.parse(localStorage.getItem('chats')||'{}');
 let currentChatId=localStorage.getItem('currentChatId')||null;
 let tasks=JSON.parse(localStorage.getItem('ai_tasks')||'[]');
 let selectedFiles=[];
+let keepAliveInterval=null;
 
 let _saveDebounce=null;
 function debouncedAutoSave(){
@@ -515,7 +516,7 @@ function initApp(){
   })();
   document.getElementById('curModel').textContent=currentModel;
   document.getElementById('topModel').textContent=currentModel.replace('gemini-','').slice(0,12);
-  document.getElementById('appVersion').textContent='1.0.19-persist-3level';
+  document.getElementById('appVersion').textContent='1.0.20-fix-codespace-ports-keepalive';
   setupKeepAlive();
   if(localStorage.getItem('autoWake')!=='0' && localStorage.getItem('githubPat')){
     setTimeout(()=>{ 
@@ -905,11 +906,13 @@ async function autoSetupEverything(){
     const freshRes=await fetch(`https://api.github.com/user/codespaces/${target.name}`,{headers:{'Authorization':'token '+pat}});
     const fresh=await freshRes.json();
     log.textContent+=`Web URL: ${fresh.web_url}, состояние: ${fresh.state}\n`;
-    // 4. Порт 3000 public с повторами
+    // 4. Порт 3000 public - делаем публичным, но не паникуем если API не отвечает из-за CORS
     let portUrl=`https://${target.name}-3000.app.github.dev`;
-    for(let i=0;i<3;i++){
+    let portPublic=false;
+    for(let i=0;i<2;i++){
       try{
-        const portsRes=await fetch(`https://api.github.com/user/codespaces/${target.name}/ports`,{headers:{'Authorization':'token '+pat}});
+        const portsRes=await fetch(`https://api.github.com/user/codespaces/${target.name}/ports`,{headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json'}});
+        if(!portsRes.ok){ log.textContent+=`Ports API ${portsRes.status}, пропускаю проверку портов\n`; break; }
         const portsData=await portsRes.json();
         if(portsData.ports){
           const p3000=portsData.ports.find(p=>p.port_number===3000);
@@ -918,41 +921,68 @@ async function autoSetupEverything(){
             if(p3000.browse_url) portUrl=p3000.browse_url;
             if(p3000.visibility!=='public'){
               log.textContent+=`Делаю публичным (попытка ${i+1})...\n`;
-              await fetch(`https://api.github.com/user/codespaces/${target.name}/ports/3000`,{method:'PATCH',headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({visibility:'public'})});
-              await new Promise(r=>setTimeout(r,3000));
-            } else { log.textContent+='Порт уже публичный ✅\n'; break; }
+              try{
+                await fetch(`https://api.github.com/user/codespaces/${target.name}/ports/3000`,{method:'PATCH',headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({visibility:'public'})});
+                await new Promise(r=>setTimeout(r,3000));
+              }catch(e){ log.textContent+=`Не смог сделать public через API (CORS?), сделай вручную в VS Code → Ports → 3000 → Public\n`; }
+            } else { log.textContent+='Порт уже публичный ✅\n'; portPublic=true; break; }
           } else {
-            log.textContent+='Порт 3000 еще не проброшен, жду 10 сек...\n';
-            await new Promise(r=>setTimeout(r,10000));
+            log.textContent+=`Порт 3000 еще не проброшен, жду 5 сек...\n`;
+            await new Promise(r=>setTimeout(r,5000));
           }
         }
-      }catch(e){ log.textContent+='Ошибка портов: '+e.message+'\n'; await new Promise(r=>setTimeout(r,5000)); }
+      }catch(e){
+        log.textContent+=`Ports API недоступен из браузера (это норм), пропускаю. Порт сделай Public вручную если надо.\n`;
+        console.log('ports fetch error', e);
+        break;
+      }
     }
     document.getElementById('codespaceUrl').value=portUrl;
     localStorage.setItem('codespaceUrl',portUrl);
     log.textContent+=`✅ URL: ${portUrl}\n`;
-    // 5. Проверка сервера 5 попыток
-    log.textContent+='4. Проверяю сервер (5 попыток)...\n';
-    for(let i=0;i<5;i++){
+    // 5. Проверка сервера - улучшенная, без спама Failed to fetch
+    log.textContent+='4. Проверяю сервер (3 попытки)...\n';
+    let serverOk=false;
+    for(let i=0;i<3;i++){
       try{
-        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),8000);
-        const sRes=await fetch(portUrl+'/status',{signal:ctrl.signal});
+        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),10000);
+        const sRes=await fetch(portUrl+'/status',{signal:ctrl.signal, mode:'cors'});
         if(sRes.ok){
           const sData=await sRes.json();
           log.textContent+=`✅ Сервер онлайн! ${sData.cpus} vCPU, ${sData.totalMem}\n`;
           document.getElementById('linuxStatus').textContent='онлайн'; document.getElementById('linuxStatus').style.color='#4ade80';
           document.getElementById('linuxDetails').textContent=`${sData.cpus} vCPU • ${sData.totalMem} • ${sData.hostname}`;
+          serverOk=true;
           break;
         } else {
-          log.textContent+=`Попытка ${i+1}: ${sRes.status}, жду 10 сек...\n`;
-          await new Promise(r=>setTimeout(r,10000));
+          log.textContent+=`Попытка ${i+1}: HTTP ${sRes.status}\n`;
+          await new Promise(r=>setTimeout(r,5000));
         }
       }catch(e){
-        log.textContent+=`Попытка ${i+1} не отвечает: ${e.message}, жду 10 сек...\n`;
-        await new Promise(r=>setTimeout(r,10000));
+        log.textContent+=`Попытка ${i+1}: не отвечает (${e.message}). `;
+        if(i===0) log.textContent+=`Это норм если порт Private или сервер еще стартует.\n`;
+        else log.textContent+=`\n`;
+        await new Promise(r=>setTimeout(r,5000));
       }
     }
-    log.textContent+='\n🎉 Готово! Codespace онлайн, порт публичный, URL сохранен.\nЕсли всё равно спит - нажми ещё раз ⚡, иногда GitHub тупит 1-2 мин.';
+    if(!serverOk){
+      log.textContent+=`\n⚠️ Сервер не отвечает, но Codespace Available — это значит:\n1. Порт 3000 Private — зайди в ${fresh.web_url} → вкладка PORTS → 3000 → правый клик → Port Visibility → Public\n2. Или сервер не запустился — в Codespace терминале: npm install && node server.js\n3. Или используй Replit (рекомендую) — он никогда не требует Public: https://my-agent--heckar904.replit.app\n`;
+      log.textContent+=`Текущий URL сохранен: ${portUrl}\nПопробуй открыть его в новой вкладке — если просит GitHub логин, значит порт Private.\n`;
+      // Пробуем Replit как fallback
+      try{
+        const rRes=await fetch('https://my-agent--heckar904.replit.app/status');
+        if(rRes.ok){
+          const rData=await rRes.json();
+          log.textContent+=`\n✅ Зато Replit работает! ${rData.cpus} vCPU ${rData.totalMem} — используй его: https://my-agent--heckar904.replit.app\n`;
+          document.getElementById('codespaceUrl').value='https://my-agent--heckar904.replit.app';
+          localStorage.setItem('codespaceUrl','https://my-agent--heckar904.replit.app');
+          document.getElementById('linuxStatus').textContent='онлайн (Replit)';
+          document.getElementById('linuxStatus').style.color='#4ade80';
+        }
+      }catch(e){}
+    } else {
+      log.textContent+=`\n🎉 Готово! Codespace онлайн, URL сохранен.\n`;
+    }
     document.getElementById('patStatus').textContent='✅ Всё настроено!';
     setupKeepAlive();
     await listCodespaces();
@@ -1084,7 +1114,6 @@ async function autoWakeLinux(){
 }
 function useCodespaceUrl(name){ const url=`https://${name}-3000.app.github.dev`; document.getElementById('codespaceUrl').value=url; localStorage.setItem('codespaceUrl',url); }
 
-let keepAliveInterval=null;
 function setupKeepAlive(){
   if(keepAliveInterval) clearInterval(keepAliveInterval);
   const alwaysOn=localStorage.getItem('alwaysOn')==='1';
