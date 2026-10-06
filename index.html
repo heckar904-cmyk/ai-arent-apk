@@ -576,30 +576,38 @@ async function saveToServer(){
   try{
     const codespaceUrl=localStorage.getItem('codespaceUrl')||document.getElementById('codespaceUrl')?.value||'https://my-agent--heckar904.replit.app';
     const url=(codespaceUrl||'https://my-agent--heckar904.replit.app').replace(/\/$/,'')+'/save-keys';
+    const gemini=localStorage.getItem('gemini')||'';
+    const groq=localStorage.getItem('groq')||'';
+    const pat=localStorage.getItem('githubPat')||'';
     const payload={
-      gemini: localStorage.getItem('gemini')||'',
-      groq: localStorage.getItem('groq')||'',
-      githubPat: localStorage.getItem('githubPat')||'',
+      gemini: gemini,
+      groq: groq,
+      githubPat: pat,
       codespaceUrl: localStorage.getItem('codespaceUrl')||'',
       extraPats: localStorage.getItem('extraPats')||'[]'
     };
-    if(!payload.gemini && !payload.groq) return;
+    if(!payload.gemini && !payload.groq) { addTerminalLog('info','saveToServer: нечего сохранять (ключи пустые)'); return; }
+    addTerminalLog('info',`[SAVE] → ${url}\n  кто: ${currentUser}\n  gemini: ${gemini?gemini.slice(0,8)+'... ('+gemini.length+' chars)':'пусто'}\n  groq: ${groq?groq.slice(0,8)+'... ('+groq.length+')':'пусто'}\n  pat: ${pat?pat.slice(0,10)+'...':'пусто'}\n  codespaceUrl: ${payload.codespaceUrl}`);
     const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
     const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctrl.signal});
-    if(r.ok){ addTerminalLog('ok','Сохранено на сервер Replit'); }
-  }catch(e){ addTerminalLog('warn','saveToServer fail '+e.message); }
+    const txt=await r.text();
+    addTerminalLog(r.ok?'ok':'err',`[SAVE] ← ${r.status} ${r.statusText}\n  ответ: ${txt.slice(0,300)}\n  ${r.ok?'✅ Сохранено на сервер!':'❌ Ошибка сохранения'}`);
+  }catch(e){ addTerminalLog('err','[SAVE] ❌ fail '+e.message); }
 }
 async function loadFromServer(){
   try{
     const codespaceUrl=localStorage.getItem('codespaceUrl')||'https://my-agent--heckar904.replit.app';
     const url=(codespaceUrl).replace(/\/$/,'')+'/get-keys';
+    addTerminalLog('info',`[LOAD] → ${url}\n  кто: ${currentUser}\n  запрос ключей с сервера`);
     const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
     const r=await fetch(url,{signal:ctrl.signal});
+    addTerminalLog(r.ok?'ok':'warn',`[LOAD] ← ${r.status} ${r.statusText}`);
     if(!r.ok) return false;
     const data=await r.json();
+    addTerminalLog('info',`[LOAD] данные: gemini=${data.gemini?'есть '+data.gemini.slice(0,8)+'...':'нет'}, groq=${data.groq?'есть':'нет'}, pat=${data.githubPat?'есть':'нет'}, updated=${data.updated||'нет'}`);
     let loaded=false;
-    if(data.gemini && !localStorage.getItem('gemini')){ localStorage.setItem('gemini', data.gemini); loaded=true; }
-    if(data.groq && !localStorage.getItem('groq')){ localStorage.setItem('groq', data.groq); loaded=true; }
+    if(data.gemini && !localStorage.getItem('gemini')){ localStorage.setItem('gemini', data.gemini); loaded=true; addTerminalLog('ok','[LOAD] gemini восстановлен '+data.gemini.slice(0,8)+'...'); }
+    if(data.groq && !localStorage.getItem('groq')){ localStorage.setItem('groq', data.groq); loaded=true; addTerminalLog('ok','[LOAD] groq восстановлен'); }
     if(data.githubPat && !localStorage.getItem('githubPat')){ localStorage.setItem('githubPat', data.githubPat); loaded=true; }
     if(data.codespaceUrl && !localStorage.getItem('codespaceUrl')){ localStorage.setItem('codespaceUrl', data.codespaceUrl); loaded=true; }
     if(data.extraPats && !localStorage.getItem('extraPats')){ localStorage.setItem('extraPats', typeof data.extraPats==='string'? data.extraPats : JSON.stringify(data.extraPats)); loaded=true; }
@@ -609,10 +617,9 @@ async function loadFromServer(){
       document.getElementById('githubPat').value=localStorage.getItem('githubPat')||'';
       document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||'';
       addMessage('system','🔄 Ключи восстановлены с сервера Replit! Не пропадут.');
-      addTerminalLog('ok','Ключи с сервера восстановлены');
     }
     return loaded;
-  }catch(e){ addTerminalLog('warn','loadFromServer fail '+e.message); return false; }
+  }catch(e){ addTerminalLog('err','[LOAD] ❌ '+e.message); return false; }
 }
 
 function initApp(){
@@ -674,7 +681,7 @@ function initApp(){
   })();
   document.getElementById('curModel').textContent=currentModel;
   document.getElementById('topModel').textContent=currentModel.replace('gemini-','').slice(0,12);
-  document.getElementById('appVersion').textContent='2.0-neon-auto';
+  document.getElementById('appVersion').textContent='2.1-neon-terminal-detailed';
   setupKeepAlive();
   if(localStorage.getItem('autoWake')!=='0' && localStorage.getItem('githubPat')){
     setTimeout(()=>{ 
@@ -924,25 +931,41 @@ async function callAI(prompt, retryCount=0){
     if(mdl.startsWith('groq/')){
       if(!groqKey) throw new Error('Нет Groq ключа');
       const id=mdl.replace('groq/','');
+      addTerminalLog('info',`[AI] → Groq API\n  кто: ${currentUser}\n  модель: ${id}\n  ключ: ${groqKey.slice(0,8)}... (${groqKey.length} chars)\n  промпт: ${prompt.length} chars\n  URL: https://api.groq.com/openai/v1/chat/completions`);
       const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+groqKey},body:JSON.stringify({model:id,messages:[{role:'user',content:prompt}],temperature:0.7})});
-      const data=await res.json(); if(!res.ok) throw new Error(data.error?.message||'Groq error'); return data.choices[0].message.content;
+      const data=await res.json();
+      addTerminalLog(res.ok?'ok':'err',`[AI] ← Groq ${res.status}\n  ответ: ${JSON.stringify(data).slice(0,400)}\n  ${res.ok?'✅ Успех':'❌ Ошибка'}`);
+      if(!res.ok) throw new Error(data.error?.message||'Groq error'); 
+      const out=data.choices[0].message.content;
+      addTerminalLog('ok',`[AI] Groq вернул ${out.length} chars`);
+      return out;
     } else {
       if(!geminiKey) throw new Error('Нет Gemini ключа, введи в настройках');
       const apiModel=mdl.startsWith('models/')?mdl:`models/${mdl}`;
       const url=`https://generativelanguage.googleapis.com/v1beta/${apiModel}:generateContent?key=${geminiKey}`;
+      addTerminalLog('info',`[AI] → Gemini API\n  кто: ${currentUser}\n  модель: ${mdl} → ${apiModel}\n  ключ: ${geminiKey.slice(0,8)}... (${geminiKey.length} chars) ${geminiKey.startsWith('AIza')?'✅ формат верный':'❌ формат неверный!'}\n  промпт: ${prompt.length} chars\n  URL: ${url.replace(geminiKey,'KEY_HIDDEN')}`);
       const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.7,maxOutputTokens:2048}})});
       const data=await res.json();
-      if(!res.ok){ const msg=(data.error?.message||'').toLowerCase(); if(msg.includes('high demand')||msg.includes('overloaded')||msg.includes('resource')||res.status===503||res.status===429) throw new Error('HIGH_DEMAND:'+mdl); throw new Error((data.error?.message||'').slice(0,300)); }
-      return data.candidates?.[0]?.content?.parts?.[0]?.text||'Нет ответа';
+      addTerminalLog(res.ok?'ok':'err',`[AI] ← Gemini ${res.status}\n  ответ: ${JSON.stringify(data).slice(0,500)}\n  ${res.ok?'✅ Успех':'❌ Ошибка: '+(data.error?.message||'').slice(0,200)}`);
+      if(!res.ok){ 
+        const msg=(data.error?.message||'').toLowerCase(); 
+        addTerminalLog('err',`[AI] Gemini ошибка: ${data.error?.message||'unknown'} | status ${res.status}`);
+        if(msg.includes('high demand')||msg.includes('overloaded')||msg.includes('resource')||res.status===503||res.status===429) throw new Error('HIGH_DEMAND:'+mdl); 
+        throw new Error((data.error?.message||'').slice(0,300)); 
+      }
+      const out=data.candidates?.[0]?.content?.parts?.[0]?.text||'Нет ответа';
+      addTerminalLog('ok',`[AI] Gemini вернул ${out.length} chars, модель ${mdl}`);
+      return out;
     }
   }
   try{ 
-    addTerminalLog('info','callAI '+model);
+    addTerminalLog('info',`[AI] Вызов модели ${model}, попытка ${retryCount+1}`);
     return await tryModel(model); 
   }catch(e){
-    addTerminalLog('err','callAI '+e.message);
+    addTerminalLog('err','[AI] ❌ '+e.message);
     if(e.message.startsWith('HIGH_DEMAND') && retryCount<fallbackChain.length){
       const next=fallbackChain[retryCount];
+      addTerminalLog('warn',`[AI] ${model} перегружен (high demand), переключаюсь на ${next}`);
       const chatEl=document.getElementById('chatInner'); const div=document.createElement('div'); div.className='bubble system'; div.textContent=`${model} перегружен, переключаюсь на ${next}...`; chatEl.appendChild(div);
       currentModel=next; localStorage.setItem('selectedModel',next); document.getElementById('curModel').textContent=next.replace('gemini-',''); document.getElementById('topModel').textContent=next.replace('gemini-','').slice(0,12);
       return await callAI(prompt,retryCount+1);
@@ -955,34 +978,60 @@ async function sendMsg(){
   const txt=inp.value.trim(); if(!txt) return;
   inp.value=''; inp.style.height='26px';
   addMessage('me',txt);
-  addTerminalLog('info','Отправка: '+txt.slice(0,50));
+  const geminiKey=localStorage.getItem('gemini')||'';
+  const groqKey=localStorage.getItem('groq')||'';
+  const linuxUrl=localStorage.getItem('codespaceUrl')||'https://my-agent--heckar904.replit.app';
+  addTerminalLog('info',`[SEND] 👤 ${currentUser} отправляет сообщение\n  куда: ${linuxUrl} + Gemini API\n  текст: "${txt.slice(0,100)}" (${txt.length} chars)\n  модель: ${currentModel}\n  режим: ${currentMode}\n  ключи: gemini=${geminiKey?geminiKey.slice(0,8)+'... ('+geminiKey.length+')':'НЕТ!'} groq=${groqKey?groqKey.slice(0,8)+'...':'нет'}\n  файлы: ${selectedFiles.length}\n  чатID: ${currentChatId}`);
+  
   const lower=txt.toLowerCase();
-  if(lower.includes('смонтируй') && (lower.includes('тикток')||lower.includes('tiktok')||lower.includes('видео'))){ switchMode('montage'); if(selectedFiles.length>0) doTikTokMontage(); else addMessage('ai','Прикрепи видео через + (до 1ГБ) и нажми Смонтировать.'); return; }
+  if(lower.includes('смонтируй') && (lower.includes('тикток')||lower.includes('tiktok')||lower.includes('видео'))){ 
+    addTerminalLog('info','[SEND] Обнаружен запрос монтажа TikTok');
+    switchMode('montage'); 
+    if(selectedFiles.length>0) doTikTokMontage(); 
+    else addMessage('ai','Прикрепи видео через + (до 1ГБ) и нажми Смонтировать.'); 
+    return; 
+  }
   const bubble=addMessage('ai','<div class="typing"><span></span><span></span><span></span></div> Думаю через Linux...');
   try{
-    // Пробуем Linux сначала если онлайн
-    const linuxUrl=localStorage.getItem('codespaceUrl')||'https://my-agent--heckar904.replit.app';
+    // Пробуем Linux сначала если онлайн - ДЕТАЛЬНО
     let usedLinux=false;
+    addTerminalLog('info',`[SEND] → Пробую Linux\n  URL: ${linuxUrl.replace(/\/$/,'')+'/chat'}\n  метод: POST\n  тело: {prompt: ${txt.length} chars, model: ${currentModel}}`);
     try{
-      const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),8000);
+      const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),10000);
+      const start=Date.now();
       const r=await fetch(linuxUrl.replace(/\/$/,'')+'/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:txt,model:currentModel}),signal:ctrl.signal});
+      const elapsed=Date.now()-start;
+      addTerminalLog(r.ok?'ok':'warn',`[SEND] ← Linux ответ за ${elapsed}ms\n  статус: ${r.status} ${r.statusText}\n  ${r.ok?'✅':'❌'}`);
       if(r.ok){
         const d=await r.json();
+        addTerminalLog('info',`[SEND] Linux данные: via=${d.via||'unknown'}, model=${d.model||currentModel}, response ${d.response?d.response.length+' chars':'пусто'}`);
         if(d.response){
           bubble.innerHTML=d.response.replace(/\n/g,'<br>');
           if(chats[currentChatId]){ chats[currentChatId].messages[chats[currentChatId].messages.length-1].text=d.response; saveChats(); }
-          addTerminalLog('ok','Ответ через Linux: '+d.via);
+          addTerminalLog('ok',`[SEND] ✅ Ответ через Linux (${d.via}), ${d.response.length} chars`);
           usedLinux=true;
+        } else {
+          addTerminalLog('warn','[SEND] Linux вернул пустой response, fallback к Gemini');
         }
+      } else {
+        const errTxt=await r.text();
+        addTerminalLog('warn',`[SEND] Linux ошибка ${r.status}: ${errTxt.slice(0,300)} → fallback к Gemini`);
       }
-    }catch(e){ addTerminalLog('warn','Linux chat fail, fallback direct'); }
+    }catch(e){ 
+      addTerminalLog('warn',`[SEND] ❌ Linux не ответил: ${e.message} → fallback к прямому Gemini API`);
+    }
     if(!usedLinux){
+      addTerminalLog('info',`[SEND] → Fallback напрямую к Gemini\n  причина: Linux не ответил или пусто\n  модель: ${currentModel}\n  ключ: ${geminiKey?geminiKey.slice(0,8)+'...':'НЕТ КЛЮЧА!'}`);
       const sys=currentMode==='agent'?'Ты агент с Vision, Audio, Director, CLIP. Отвечай кратко как ChatGPT.':'Ты помощник, отвечай кратко как ChatGPT.';
       const ans=await callAI(sys+'\n\nПользователь: '+txt);
-      bubble.textContent=ans; if(chats[currentChatId]){ chats[currentChatId].messages[chats[currentChatId].messages.length-1].text=ans; saveChats(); }
-      addTerminalLog('ok','Ответ напрямую Gemini');
+      bubble.textContent=ans; 
+      if(chats[currentChatId]){ chats[currentChatId].messages[chats[currentChatId].messages.length-1].text=ans; saveChats(); }
+      addTerminalLog('ok',`[SEND] ✅ Ответ напрямую Gemini, ${ans.length} chars`);
     }
-  }catch(e){ bubble.textContent='Ошибка: '+e.message; addTerminalLog('err','sendMsg '+e.message); }
+  }catch(e){ 
+    bubble.textContent='Ошибка: '+e.message; 
+    addTerminalLog('err',`[SEND] ❌ КРИТ ОШИБКА: ${e.message}\n  стек: ${e.stack?.slice(0,500)||'нет'}`);
+  }
 }
 
 // LINUX AUTO
@@ -1169,12 +1218,18 @@ async function checkLinuxReal(){
   const codespaceUrl=localStorage.getItem('codespaceUrl')||document.getElementById('codespaceUrl')?.value.trim()||'https://my-agent--heckar904.replit.app';
   const pat=localStorage.getItem('githubPat');
   if(log) { log.style.display='none'; log.textContent=''; }
+  addTerminalLog('info',`[LINUX] Проверка Linux\n  кто: ${currentUser}\n  URL: ${codespaceUrl}\n  PAT: ${pat?pat.slice(0,10)+'...':'нет'}\n  время: ${new Date().toISOString()}`);
   try{
     try{
+      addTerminalLog('info','[LINUX] → Пробую Replit https://my-agent--heckar904.replit.app/status');
       const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
+      const start=Date.now();
       const rRes=await fetch('https://my-agent--heckar904.replit.app/status',{signal:ctrl.signal});
+      const elapsed=Date.now()-start;
+      addTerminalLog(rRes.ok?'ok':'warn',`[LINUX] ← Replit ${rRes.status} за ${elapsed}ms`);
       if(rRes.ok){
         const rData=await rRes.json();
+        addTerminalLog('ok',`[LINUX] ✅ Replit онлайн!\n  CPU: ${rData.cpus} x ${rData.cpuModel}\n  RAM: ${rData.freeMem}/${rData.totalMem} (used ${rData.usedMem})\n  Uptime: ${rData.uptime} (${rData.uptimeSec}s)\n  Host: ${rData.hostname} ${rData.platform} ${rData.arch}\n  Load: ${rData.load}\n  Keys на сервере: gemini=${rData.keysSaved?.gemini?'да':'нет'} groq=${rData.keysSaved?.groq?'да':'нет'}\n  Сообщение: ${rData.message}`);
         status.textContent='онлайн'; status.style.color='#00ff88';
         if(details) details.textContent=`✅ Linux ОБЯЗАТЕЛЕН и онлайн в фоне! ${rData.cpus} vCPU ${rData.totalMem} — открывать не надо!`;
         if(log){ log.style.display='block'; log.textContent=`✅ Replit онлайн! ${rData.cpuModel}\nRAM ${rData.freeMem}/${rData.totalMem}\nВ фоне — открывать не надо!\n`; }
@@ -1182,10 +1237,9 @@ async function checkLinuxReal(){
           localStorage.setItem('codespaceUrl','https://my-agent--heckar904.replit.app');
           const el=document.getElementById('codespaceUrl'); if(el) el.value='https://my-agent--heckar904.replit.app';
         }
-        addTerminalLog('ok','Linux Replit онлайн '+rData.totalMem);
         return;
       }
-    }catch(e){}
+    }catch(e){ addTerminalLog('warn','[LINUX] Replit не ответил: '+e.message); }
     let csState='unknown';
     if(pat){
       try{
