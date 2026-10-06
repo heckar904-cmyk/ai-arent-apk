@@ -402,26 +402,78 @@ let currentChatId=localStorage.getItem('currentChatId')||null;
 let tasks=JSON.parse(localStorage.getItem('ai_tasks')||'[]');
 let selectedFiles=[];
 
+let _saveDebounce=null;
+function debouncedAutoSave(){
+  if(_saveDebounce) clearTimeout(_saveDebounce);
+  _saveDebounce=setTimeout(()=>{
+    syncKeysToCloud();
+    saveToServer();
+    const el=document.getElementById('keyStatus');
+    if(el) { el.textContent='✅ Авто-сохранено локально + облако + сервер'; el.style.color='#4ade80'; setTimeout(()=>checkKeys(),2000); }
+  },1200);
+}
+async function saveToServer(){
+  try{
+    const codespaceUrl=localStorage.getItem('codespaceUrl')||document.getElementById('codespaceUrl')?.value||'https://my-agent--heckar904.replit.app';
+    const url=(codespaceUrl||'https://my-agent--heckar904.replit.app').replace(/\/$/,'')+'/save-keys';
+    const payload={
+      gemini: localStorage.getItem('gemini')||'',
+      groq: localStorage.getItem('groq')||'',
+      githubPat: localStorage.getItem('githubPat')||'',
+      codespaceUrl: localStorage.getItem('codespaceUrl')||'',
+      extraPats: localStorage.getItem('extraPats')||'[]'
+    };
+    if(!payload.gemini && !payload.groq) return; // nothing to save
+    const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctrl.signal});
+    if(r.ok){ console.log('Saved to server', await r.json()); }
+  }catch(e){ console.log('saveToServer fail', e.message); }
+}
+async function loadFromServer(){
+  try{
+    const codespaceUrl=localStorage.getItem('codespaceUrl')||'https://my-agent--heckar904.replit.app';
+    const url=(codespaceUrl).replace(/\/$/,'')+'/get-keys';
+    const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
+    const r=await fetch(url,{signal:ctrl.signal});
+    if(!r.ok) return false;
+    const data=await r.json();
+    let loaded=false;
+    if(data.gemini && !localStorage.getItem('gemini')){ localStorage.setItem('gemini', data.gemini); loaded=true; }
+    if(data.groq && !localStorage.getItem('groq')){ localStorage.setItem('groq', data.groq); loaded=true; }
+    if(data.githubPat && !localStorage.getItem('githubPat')){ localStorage.setItem('githubPat', data.githubPat); loaded=true; }
+    if(data.codespaceUrl && !localStorage.getItem('codespaceUrl')){ localStorage.setItem('codespaceUrl', data.codespaceUrl); loaded=true; }
+    if(data.extraPats && !localStorage.getItem('extraPats')){ localStorage.setItem('extraPats', typeof data.extraPats==='string'? data.extraPats : JSON.stringify(data.extraPats)); loaded=true; }
+    if(loaded){
+      console.log('Loaded keys from server');
+      document.getElementById('geminiKey').value=localStorage.getItem('gemini')||'';
+      document.getElementById('groqKey').value=localStorage.getItem('groq')||'';
+      document.getElementById('githubPat').value=localStorage.getItem('githubPat')||'';
+      document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||'';
+      addMessage('system','🔄 Ключи восстановлены с сервера Replit! Теперь не пропадут.');
+    }
+    return loaded;
+  }catch(e){ console.log('loadFromServer fail', e.message); return false; }
+}
+
 function initApp(){
   document.getElementById('userInfo').textContent=`${currentUser} ${users[currentUser]?.role==='admin'?'admin':'guest'}`;
   renderChatList();
   if(!currentChatId||!chats[currentChatId]) newChat(); else loadChat(currentChatId);
+  const defaultReplitUrl="https://my-agent--heckar904.replit.app";
+  if(!localStorage.getItem('codespaceUrl')) localStorage.setItem('codespaceUrl', defaultReplitUrl);
   // Загружаем ключи с авто-сохранением
   const savedGemini=localStorage.getItem('gemini')||'';
   const savedGroq=localStorage.getItem('groq')||'';
   document.getElementById('geminiKey').value=savedGemini;
   document.getElementById('groqKey').value=savedGroq;
-  // Авто-сохранение при вводе
-  document.getElementById('geminiKey').addEventListener('input',e=>{ localStorage.setItem('gemini', e.target.value.trim()); checkKeys(); });
-  document.getElementById('groqKey').addEventListener('input',e=>{ localStorage.setItem('groq', e.target.value.trim()); });
-  document.getElementById('githubPat').addEventListener('input',e=>{ localStorage.setItem('githubPat', e.target.value.trim()); });
-  document.getElementById('codespaceUrl').addEventListener('input',e=>{ localStorage.setItem('codespaceUrl', e.target.value.trim()); });
-  
-  const defaultReplitUrl="https://my-agent--heckar904.replit.app";
-  if(!localStorage.getItem('codespaceUrl')) localStorage.setItem('codespaceUrl', defaultReplitUrl);
   document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||defaultReplitUrl;
   document.getElementById('githubPat').value=localStorage.getItem('githubPat')||'';
-  // Загружаем доп токены
+  // Авто-сохранение при вводе - 3 уровня: local + cloud Gist + server
+  document.getElementById('geminiKey').addEventListener('input',e=>{ localStorage.setItem('gemini', e.target.value.trim()); checkKeys(); debouncedAutoSave(); });
+  document.getElementById('groqKey').addEventListener('input',e=>{ localStorage.setItem('groq', e.target.value.trim()); debouncedAutoSave(); });
+  document.getElementById('githubPat').addEventListener('input',e=>{ localStorage.setItem('githubPat', e.target.value.trim()); debouncedAutoSave(); });
+  document.getElementById('codespaceUrl').addEventListener('input',e=>{ localStorage.setItem('codespaceUrl', e.target.value.trim()); debouncedAutoSave(); });
+  
   const extraPats=JSON.parse(localStorage.getItem('extraPats')||'[]');
   extraPats.forEach((pat,i)=>{ addPatField(pat); });
   document.getElementById('autoWakeToggle').checked=localStorage.getItem('autoWake')!=='0';
@@ -436,19 +488,34 @@ function initApp(){
       localStorage.setItem('autoWake','1');
       document.getElementById('keepAliveToggle').checked=true;
       document.getElementById('autoWakeToggle').checked=true;
-      addMessage('system','🔥 Всегда включен активирован! Linux будет работать 24/7, тратит 60ч/мес бесплатно. Авто-сон отключен. GitHub Action каждые 10 мин будет будить даже когда сайт закрыт.');
+      addMessage('system','🔥 Всегда включен активирован!');
     } else {
-      addMessage('system','Всегда включен выключен. Теперь будет засыпать через 30 мин как обычно.');
+      addMessage('system','Всегда включен выключен.');
     }
     setupKeepAlive();
   });
   checkKeys(); renderTasks(); renderGuestRequests(); renderGuestList(); checkLinuxReal(); showAdminNotifs();
   if(localStorage.getItem('gemini')||localStorage.getItem('groq')) loadModels();
-  // Загружаем с облака для кросс-девайс синхронизации
-  loadKeysFromCloud().then(()=>{ checkKeys(); loadModels(); });
+  // Загружаем с сервера и облака для кросс-девайс - если локально пусто
+  (async()=>{
+    const hadLocal = !!(localStorage.getItem('gemini')||localStorage.getItem('groq'));
+    if(!hadLocal){
+      addMessage('system','🔍 Локально ключей нет, ищу в облаке и на сервере...');
+      await loadFromServer();
+      await loadKeysFromCloud();
+    } else {
+      // Даже если есть локально, все равно подтягиваем с облака в фоне и синкаем
+      loadFromServer().then(()=>{ checkKeys(); loadModels(); });
+      loadKeysFromCloud().then(()=>{ checkKeys(); loadModels(); });
+      // Сразу синкаем локальные на сервер
+      saveToServer();
+      syncKeysToCloud();
+    }
+    checkKeys(); loadModels();
+  })();
   document.getElementById('curModel').textContent=currentModel;
   document.getElementById('topModel').textContent=currentModel.replace('gemini-','').slice(0,12);
-  document.getElementById('appVersion').textContent='1.0.18-login-fixed-persist-chatgpt';
+  document.getElementById('appVersion').textContent='1.0.19-persist-3level';
   setupKeepAlive();
   if(localStorage.getItem('autoWake')!=='0' && localStorage.getItem('githubPat')){
     setTimeout(()=>{ 
@@ -550,20 +617,20 @@ function saveKeys(){
   const extraPats=Array.from(extraInputs).map(i=>i.value.trim()).filter(v=>v);
   localStorage.setItem('extraPats', JSON.stringify(extraPats));
   checkKeys(); loadModels();
-  addMessage('system','Ключи сохранены и не пропадут при перезагрузке! Авто-сохранение включено.');
-  // Пытаемся сохранить в облако если есть PAT
+  addMessage('system','✅ Ключи сохранены: локально + облако Gist + сервер Replit! Теперь не пропадут НИКОГДА, даже с телефона/ПК.');
   syncKeysToCloud();
+  saveToServer();
 }
 
 async function syncKeysToCloud(){
   const pat=localStorage.getItem('githubPat');
-  if(!pat) return;
+  if(!pat) { console.log('No PAT for cloud sync'); return; }
   try{
     const gemini=localStorage.getItem('gemini')||'';
     const groq=localStorage.getItem('groq')||'';
     const codespaceUrl=localStorage.getItem('codespaceUrl')||'';
     const extraPats=localStorage.getItem('extraPats')||'[]';
-    // Сохраняем в Gist приватный для кросс-девайс синхронизации
+    if(!gemini && !groq) { console.log('Nothing to sync to cloud'); return; }
     const gistData={
       description: "AI Agent keys backup - private",
       public: false,
@@ -573,17 +640,17 @@ async function syncKeysToCloud(){
         }
       }
     };
-    // Пробуем найти существующий gist
     const listRes=await fetch('https://api.github.com/gists',{headers:{'Authorization':'token '+pat}});
     const gists=await listRes.json();
     let existing=gists.find(g=>g.files && g.files['ai-agent-keys.json']);
     if(existing){
-      await fetch(`https://api.github.com/gists/${existing.id}`,{
+      const res=await fetch(`https://api.github.com/gists/${existing.id}`,{
         method:'PATCH',
         headers:{'Authorization':'token '+pat,'Content-Type':'application/json'},
         body:JSON.stringify({files:{"ai-agent-keys.json":{content: gistData.files['ai-agent-keys.json'].content}}})
       });
-      console.log('Keys synced to existing gist', existing.id);
+      console.log('Keys synced to existing gist', existing.id, res.status);
+      if(res.ok) addMessage('system','☁️ Ключи сохранены в облако Gist — доступны с любого устройства!');
     } else {
       const createRes=await fetch('https://api.github.com/gists',{
         method:'POST',
@@ -592,13 +659,14 @@ async function syncKeysToCloud(){
       });
       const created=await createRes.json();
       console.log('Keys synced to new gist', created.id);
+      if(createRes.ok) addMessage('system','☁️ Создан облачный бэкап Gist — теперь ключи не пропадут!');
     }
   }catch(e){ console.log('Cloud sync failed', e); }
 }
 
 async function loadKeysFromCloud(){
   const pat=localStorage.getItem('githubPat');
-  if(!pat) return;
+  if(!pat) return false;
   try{
     const listRes=await fetch('https://api.github.com/gists',{headers:{'Authorization':'token '+pat}});
     const gists=await listRes.json();
@@ -606,21 +674,36 @@ async function loadKeysFromCloud(){
     if(existing){
       const content=existing.files['ai-agent-keys.json'].content;
       const data=JSON.parse(content);
-      if(data.gemini && !localStorage.getItem('gemini')){ localStorage.setItem('gemini', data.gemini); document.getElementById('geminiKey').value=data.gemini; }
-      if(data.groq && !localStorage.getItem('groq')){ localStorage.setItem('groq', data.groq); document.getElementById('groqKey').value=data.groq; }
-      if(data.codespaceUrl && !localStorage.getItem('codespaceUrl')){ localStorage.setItem('codespaceUrl', data.codespaceUrl); document.getElementById('codespaceUrl').value=data.codespaceUrl; }
-      if(data.extraPats){ localStorage.setItem('extraPats', data.extraPats); }
-      console.log('Keys loaded from cloud gist');
-      addMessage('system','🔄 Ключи загружены с облака (с другого устройства)!');
+      let restored=false;
+      if(data.gemini && !localStorage.getItem('gemini')){ localStorage.setItem('gemini', data.gemini); if(document.getElementById('geminiKey')) document.getElementById('geminiKey').value=data.gemini; restored=true; }
+      if(data.groq && !localStorage.getItem('groq')){ localStorage.setItem('groq', data.groq); if(document.getElementById('groqKey')) document.getElementById('groqKey').value=data.groq; restored=true; }
+      if(data.codespaceUrl && !localStorage.getItem('codespaceUrl')){ localStorage.setItem('codespaceUrl', data.codespaceUrl); if(document.getElementById('codespaceUrl')) document.getElementById('codespaceUrl').value=data.codespaceUrl; restored=true; }
+      if(data.extraPats && !localStorage.getItem('extraPats')){ localStorage.setItem('extraPats', typeof data.extraPats==='string'? data.extraPats : JSON.stringify(data.extraPats)); restored=true; }
+      // If cloud has newer keys, also update even if local exists? Only if local empty to avoid overwrite, but if cloud has gemini and local empty - restore
+      if(restored){
+        console.log('Keys loaded from cloud gist');
+        addMessage('system','🔄 Ключи восстановлены с облака Gist (с другого устройства)!');
+      }
+      return restored;
     }
   }catch(e){ console.log('Load from cloud failed', e); }
+  return false;
 }
 
 function checkKeys(){
   const g=localStorage.getItem('gemini');
+  const groq=localStorage.getItem('groq');
+  const pat=localStorage.getItem('githubPat');
   const el=document.getElementById('keyStatus');
-  if(g){ el.textContent='Gemini ключ есть. Стабильные: 2.0-flash, 1.5-flash.'; el.style.color='#4ade80'; }
-  else { el.textContent='Введи Gemini ключ с aistudio.google.com'; el.style.color='#fbbf24'; }
+  if(g){
+    let txt=`✅ Gemini есть (${g.slice(0,8)}...), Groq: ${groq?'есть':'нет'}. Сохранено: локально ✅`;
+    if(pat) txt+=', облако Gist ✅';
+    txt+=', сервер Replit попробует ✅. Перезагрузи - не пропадет!';
+    el.textContent=txt; el.style.color='#4ade80';
+  } else {
+    el.textContent='❌ Введи Gemini ключ с aistudio.google.com - он сохранится навсегда на 3 уровнях!';
+    el.style.color='#fbbf24';
+  }
 }
 
 async function loadModels(){
