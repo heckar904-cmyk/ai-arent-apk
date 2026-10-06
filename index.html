@@ -422,20 +422,37 @@ async function loadModels(){
   const geminiKey=localStorage.getItem('gemini');
   const div=document.getElementById('modelList');
   let html='';
-  const stablePriority=["gemini-2.0-flash","gemini-1.5-flash","gemini-1.5-flash-8b","gemini-flash-latest","gemini-2.5-flash-lite","gemini-2.5-flash"];
+  const stablePriority=["gemini-2.0-flash","gemini-1.5-flash","gemini-1.5-flash-8b","gemini-flash-latest","gemini-2.5-flash-lite","gemini-2.5-flash","gemini-2.5-pro","gemini-3-flash-preview","gemini-3.6-flash","gemini-3.8-flash"];
   if(geminiKey){
+    // Проверка формата ключа
+    if(geminiKey.startsWith('AQ.') && !geminiKey.startsWith('AIza')){
+      html+=`<div class="small" style="color:#f55">❌ Ключ ${geminiKey.slice(0,10)}... НЕВЕРНЫЙ! Это не Gemini API ключ. Настоящий ключ начинается с AIzaSy...<br>Иди на https://aistudio.google.com/app/apikeys → Create API key → скопируй AIza...<br>Ключ AQ.Ab8... который ты вставил - это OAuth токен, он не работает для моделей. Из-за него показывает только 3-4 модели (fallback).</div>`;
+    }
     try{
       const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?key='+geminiKey);
       const j=await r.json();
+      if(j.error){
+        const msg=j.error.message||'';
+        if(msg.includes('API key') || msg.includes('invalid') || msg.includes('UNAUTHENTICATED') || r.status===400 || r.status===401){
+          html+=`<div class="small" style="color:#f55">❌ Ошибка ключа: ${msg.slice(0,200)}<br>Ключ должен начинаться с AIzaSy... Возьми с https://aistudio.google.com/app/apikeys</div>`;
+        } else {
+          html+=`<div class="small" style="color:#fbbf24">⚠️ ${msg.slice(0,200)}</div>`;
+        }
+        throw 'key error';
+      }
       if(j.models){
         const models=j.models.filter(m=>m.name.includes('gemini')).map(m=>m.name.replace('models/',''));
         models.sort((a,b)=>{ const ai=stablePriority.indexOf(a); const bi=stablePriority.indexOf(b); if(ai!==-1 && bi!==-1) return ai-bi; if(ai!==-1) return -1; if(bi!==-1) return 1; return 0; });
+        html+=`<div class="small">✅ Найдено ${models.length} моделей (реальные с твоего ключа):</div>`;
         html+='<div class="small">Стабильные:</div>';
         models.filter(m=>stablePriority.includes(m)).forEach(m=>{ html+=`<span class="badge ${m===currentModel?'active':''}" onclick="selectModel('${m}')">${m.replace('gemini-','')}</span>`; });
-        html+='<div class="small" style="margin-top:6px">Preview:</div>';
-        models.filter(m=>!stablePriority.includes(m)).slice(0,12).forEach(m=>{ html+=`<span class="badge ${m===currentModel?'active':''}" onclick="selectModel('${m}')">⚠${m.replace('gemini-','').slice(0,12)}</span>`; });
-      } else throw 'no';
+        html+='<div class="small" style="margin-top:6px">Все остальные (${models.length}):</div>';
+        models.forEach(m=>{ html+=`<span class="badge ${m===currentModel?'active':''}" onclick="selectModel('${m}')">${m.replace('gemini-','').slice(0,18)}</span>`; });
+      } else throw 'no models';
     }catch(e){
+      if(!html.includes('❌')){
+        html+=`<div class="small" style="color:#fbbf24">⚠️ Не смог загрузить модели, показываю fallback (4 штуки). Проверь ключ - должен быть AIzaSy...</div>`;
+      }
       const fallback=["gemini-2.0-flash","gemini-1.5-flash","gemini-flash-latest","gemini-2.5-flash-lite"];
       fallback.forEach(m=>{ html+=`<span class="badge ${m===currentModel?'active':''}" onclick="selectModel('${m}')">${m.replace('gemini-','')}</span>`; });
     }
@@ -662,7 +679,21 @@ async function checkLinuxReal(){
   try{
     const r=await fetch('https://api.github.com/repos/heckar904-cmyk/my-agent');
     const j=await r.json(); if(j.updated_at) log.textContent+=`Репо: ${j.size}KB\n`;
-    if(pat) await listCodespaces();
+    // Проверяем Codespace через API если есть токен
+    let csState='unknown';
+    let csName=null;
+    if(pat){
+      try{
+        const csRes=await fetch('https://api.github.com/user/codespaces',{headers:{'Authorization':'token '+pat}});
+        const csData=await csRes.json();
+        if(csData.codespaces){
+          const my=csData.codespaces.find(c=>c.repository?.full_name==='heckar904-cmyk/my-agent');
+          if(my){ csState=my.state; csName=my.name; log.textContent+=`Codespace ${my.name}: ${my.state}, last used ${my.last_used_at? new Date(my.last_used_at).toLocaleString():''}\n`; }
+          else { log.textContent+=`Нашел ${csData.codespaces.length} codespaces, но my-agent нет\n`; }
+        }
+        await listCodespaces();
+      }catch(e){ log.textContent+='API ошибка: '+e.message+'\n'; }
+    }
     if(codespaceUrl){
       try{
         const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
@@ -670,15 +701,26 @@ async function checkLinuxReal(){
         if(res.ok){
           const data=await res.json();
           status.textContent='онлайн'; status.style.color='#4ade80';
-          details.textContent=`${data.cpus} vCPU • ${data.totalMem} • ${data.hostname}`;
-          log.textContent+=`✅ Онлайн! ${data.cpuModel}\nRAM ${data.freeMem}/${data.totalMem}\n`;
+          details.textContent=`${data.cpus} vCPU • ${data.totalMem} • ${data.hostname} • Codespace ${csState}`;
+          log.textContent+=`✅ Сервер онлайн! ${data.cpuModel}\nRAM ${data.freeMem}/${data.totalMem}\nCodespace: ${csState}\n`;
           return;
         }
       }catch(e){}
+      // Если codespace Available но сервер не отвечает - это не спит, а сервер не запущен
+      if(csState==='Available' || csState==='available'){
+        status.textContent='онлайн*'; status.style.color='#fbbf24';
+        details.textContent=`Codespace ${csState} (онлайн), но сервер не запущен`;
+        log.textContent+=`⚠️ Codespace ОНЛАЙН (${csState}), но сервер на порту 3000 не отвечает.\nЭто НЕ спит! Просто надо 1 раз зайти в Codespace и запустить: npm install && node server.js\nПорт 3000 должен быть Public.\nURL: ${codespaceUrl}\n`;
+        return;
+      }
       const res2=await fetch(codespaceUrl).catch(e=>e);
-      if(res2 && res2.status===401){ status.textContent='спит'; status.style.color='#fbbf24'; log.textContent+='Спит (401). Нажми ⚡ Разбудить автоматом.\n'; if(localStorage.getItem('autoWake')==='1' && pat) autoWakeLinux(); }
-      else { status.textContent='спит'; log.textContent+='Не отвечает, спит. Нажми ⚡ Разбудить.\n'; }
-    } else { status.textContent='нет URL'; log.textContent+='Вставь токен и нажми ⚡ Сохранить и настроить всё автоматом\n'; }
+      if(res2 && res2.status===401){ status.textContent='спит'; status.style.color='#fbbf24'; log.textContent+=`Спит (401). Codespace state: ${csState}. Нажми ⚡ Разбудить.\n`; if(localStorage.getItem('autoWake')==='1' && pat) autoWakeLinux(); }
+      else { status.textContent=csState==='Shutdown'?'выкл':csState==='Available'?'онлайн*':'спит'; log.textContent+=`Не отвечает. Codespace state: ${csState}. Нажми ⚡ Разбудить.\n`; }
+    } else { 
+      status.textContent=csState||'нет URL'; 
+      if(csState==='Available') { status.textContent='онлайн*'; details.textContent='Codespace онлайн, но URL не сохранен'; log.textContent+='Codespace онлайн, но URL не сохранен. Нажми ⚡ Сохранить и настроить всё автоматом\n'; }
+      else log.textContent+='Вставь токен и нажми ⚡ Сохранить и настроить всё автоматом\n'; 
+    }
   }catch(e){ status.textContent='ошибка'; log.textContent+='Ошибка: '+e.message; }
 }
 
