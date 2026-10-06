@@ -293,8 +293,11 @@ body{background:
 <div id="main">
 <div class="top">
 <span class="hamburger" onclick="toggleSidebar()">☰</span>
-<span id="topTitle" style="font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.3px">AI Agent Neon</span>
-<span class="small mono" id="topModel" style="background:rgba(0,240,255,0.1);border:1px solid rgba(0,240,255,0.2);padding:4px 10px;border-radius:20px;color:var(--neon-cyan)">2.0-flash</span>
+<span id="topTitle" style="font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.3px">Neon</span>
+<select id="topModelSelect" class="mono" style="background:rgba(0,240,255,0.1);border:1px solid rgba(0,240,255,0.3);padding:6px 10px;border-radius:20px;color:var(--neon-cyan);font-size:12px;max-width:160px;outline:none;cursor:pointer" onchange="selectModel(this.value)">
+<option value="gemini-2.0-flash">2.0-flash (real)</option>
+</select>
+<button id="liveBtn" class="hamburger" style="background:rgba(255,0,100,0.15);border-color:rgba(255,0,100,0.3);color:#ff4d8a" onclick="toggleLiveMode()" title="LIVE голосовой режим">🔴 LIVE</button>
 <span class="hamburger" onclick="openDrawer()">⚙️</span>
 </div>
 <div class="chat" id="chat"><div class="chat-inner" id="chatInner"></div></div>
@@ -574,25 +577,34 @@ function debouncedAutoSave(){
 }
 async function saveToServer(){
   try{
-    const codespaceUrl=localStorage.getItem('codespaceUrl')||document.getElementById('codespaceUrl')?.value||'https://my-agent--heckar904.replit.app';
-    const url=(codespaceUrl||'https://my-agent--heckar904.replit.app').replace(/\/$/,'')+'/save-keys';
     const gemini=localStorage.getItem('gemini')||'';
     const groq=localStorage.getItem('groq')||'';
     const pat=localStorage.getItem('githubPat')||'';
+    const codespaceUrl=localStorage.getItem('codespaceUrl')||'';
     const payload={
       gemini: gemini,
       groq: groq,
       githubPat: pat,
-      codespaceUrl: localStorage.getItem('codespaceUrl')||'',
+      codespaceUrl: codespaceUrl,
       extraPats: localStorage.getItem('extraPats')||'[]'
     };
-    if(!payload.gemini && !payload.groq) { addTerminalLog('info','saveToServer: нечего сохранять (ключи пустые)'); return; }
-    addTerminalLog('info',`[SAVE] → ${url}\n  кто: ${currentUser}\n  gemini: ${gemini?gemini.slice(0,8)+'... ('+gemini.length+' chars)':'пусто'}\n  groq: ${groq?groq.slice(0,8)+'... ('+groq.length+')':'пусто'}\n  pat: ${pat?pat.slice(0,10)+'...':'пусто'}\n  codespaceUrl: ${payload.codespaceUrl}`);
-    const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
-    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctrl.signal});
-    const txt=await r.text();
-    addTerminalLog(r.ok?'ok':'err',`[SAVE] ← ${r.status} ${r.statusText}\n  ответ: ${txt.slice(0,300)}\n  ${r.ok?'✅ Сохранено на сервер!':'❌ Ошибка сохранения'}`);
-  }catch(e){ addTerminalLog('err','[SAVE] ❌ fail '+e.message); }
+    if(!payload.gemini && !payload.groq) { addTerminalLog('info','saveToServer: нечего сохранять'); return; }
+    // Сохраняем на ОБА сервера: на текущий URL и на Replit дефолтный, чтобы не пропало!
+    const urlsToTry=[
+      (codespaceUrl||'https://my-agent--heckar904.replit.app').replace(/\/$/,'')+'/save-keys',
+      'https://my-agent--heckar904.replit.app/save-keys'
+    ];
+    const uniqueUrls=[...new Set(urlsToTry)];
+    addTerminalLog('info',`[SAVE] → ${uniqueUrls.join(' + ')}\n  кто: ${currentUser}\n  gemini: ${gemini?gemini.slice(0,8)+'... ('+gemini.length+')':'пусто'}\n  groq: ${groq?groq.slice(0,8)+'...':'пусто'}`);
+    for(const url of uniqueUrls){
+      try{
+        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),7000);
+        const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),signal:ctrl.signal});
+        const txt=await r.text();
+        addTerminalLog(r.ok?'ok':'err',`[SAVE] ← ${url} ${r.status}\n  ${txt.slice(0,300)} ${r.ok?'✅':''}`);
+      }catch(e){ addTerminalLog('warn',`[SAVE] ❌ ${url} fail ${e.message}`); }
+    }
+  }catch(e){ addTerminalLog('err','[SAVE] ❌ '+e.message); }
 }
 async function loadFromServer(){
   try{
@@ -679,9 +691,10 @@ function initApp(){
     }
     checkKeys(); loadModels();
   })();
-  document.getElementById('curModel').textContent=currentModel;
-  document.getElementById('topModel').textContent=currentModel.replace('gemini-','').slice(0,12);
-  document.getElementById('appVersion').textContent='2.1-neon-terminal-detailed';
+  const curEl=document.getElementById('curModel'); if(curEl) curEl.textContent=currentModel;
+  const topEl=document.getElementById('topModel'); if(topEl) topEl.textContent=currentModel.replace('gemini-','').slice(0,12);
+  const topSel=document.getElementById('topModelSelect'); if(topSel) topSel.value=currentModel;
+  document.getElementById('appVersion').textContent='2.2-neon-live-models-fix';
   setupKeepAlive();
   if(localStorage.getItem('autoWake')!=='0' && localStorage.getItem('githubPat')){
     setTimeout(()=>{ 
@@ -873,51 +886,91 @@ async function loadModels(){
   const groqKey=localStorage.getItem('groq');
   const geminiKey=localStorage.getItem('gemini');
   const div=document.getElementById('modelList');
+  const topSelect=document.getElementById('topModelSelect');
   let html='';
   const stablePriority=["gemini-2.0-flash","gemini-1.5-flash","gemini-1.5-flash-8b","gemini-flash-latest","gemini-2.5-flash-lite","gemini-2.5-flash","gemini-2.5-pro","gemini-3-flash-preview"];
+  
+  // Если ключа нет — не показываем фейковые модели!
+  if(!geminiKey && !groqKey){
+    html='<span class="small" style="color:#ff4d6d">❌ Нет API ключа! Введи Gemini ключ в ⚙️ Настройки → API ключи<br>Ключ должен начинаться с AIzaSy...<br>Без ключа модели не покажутся — это не фейк!</span>';
+    if(topSelect){ topSelect.innerHTML='<option>Нет ключа</option>'; }
+    div.innerHTML=html;
+    addTerminalLog('warn','loadModels: нет ключей, не показываю фейковые модели');
+    return;
+  }
+
   if(geminiKey){
     if(geminiKey.startsWith('AQ.') && !geminiKey.startsWith('AIza')){
       html+=`<div class="small" style="color:#ff4d6d">❌ Ключ ${geminiKey.slice(0,10)}... НЕВЕРНЫЙ! Настоящий начинается с AIzaSy...<br>Иди на https://aistudio.google.com/app/apikeys</div>`;
+      addTerminalLog('err','loadModels: ключ неверный формат AQ... вместо AIza');
     }
     try{
+      addTerminalLog('info',`[MODELS] → https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey.slice(0,8)}...\n  ключ: ${geminiKey.slice(0,8)}... (${geminiKey.length} chars)`);
       const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models?key='+geminiKey);
       const j=await r.json();
-      if(j.error){ throw j.error.message; }
+      addTerminalLog(r.ok?'ok':'err',`[MODELS] ← ${r.status} ${r.statusText}\n  ${JSON.stringify(j).slice(0,500)}`);
+      if(j.error){ 
+        addTerminalLog('err','[MODELS] ❌ '+j.error.message);
+        throw j.error.message; 
+      }
       if(j.models){
         const models=j.models.filter(m=>m.name.includes('gemini')).map(m=>m.name.replace('models/',''));
         models.sort((a,b)=>{ const ai=stablePriority.indexOf(a); const bi=stablePriority.indexOf(b); if(ai!==-1 && bi!==-1) return ai-bi; if(ai!==-1) return -1; if(bi!==-1) return 1; return 0; });
-        html+=`<div class="small">✅ ${models.length} моделей:</div>`;
+        html+=`<div class="small">✅ Найдено ${models.length} РЕАЛЬНЫХ моделей с твоего ключа:</div>`;
         html+='<div class="small">Стабильные:</div>';
         models.filter(m=>stablePriority.includes(m)).forEach(m=>{ html+=`<span class="badge ${m===currentModel?'active':''}" onclick="selectModel('${m}')">${m.replace('gemini-','')}</span>`; });
-        html+='<div class="small" style="margin-top:6px">Все:</div>';
+        html+='<div class="small" style="margin-top:6px">Все ${models.length}:</div>';
         models.forEach(m=>{ html+=`<span class="badge ${m===currentModel?'active':''}" onclick="selectModel('${m}')">${m.replace('gemini-','').slice(0,18)}</span>`; });
+        
+        // Заполняем верхний селектор РЕАЛЬНЫМИ моделями
+        if(topSelect){
+          topSelect.innerHTML=models.map(m=>`<option value="${m}" ${m===currentModel?'selected':''}>${m.replace('gemini-','')} ${stablePriority.includes(m)?'⭐':''}</option>`).join('');
+          addTerminalLog('ok',`[MODELS] Верхний селектор заполнен ${models.length} реальными моделями`);
+        }
       } else throw 'no models';
     }catch(e){
       if(!html.includes('❌')){
-        html+=`<div class="small" style="color:#ffcc00">⚠️ Fallback 4 модели. Проверь ключ AIzaSy...</div>`;
+        html+=`<div class="small" style="color:#ffcc00">⚠️ Ошибка загрузки моделей: ${String(e).slice(0,200)}<br>Показываю fallback 4 модели, но это не фейк — это запасные если API не отвечает. Проверь ключ!</div>`;
       }
       const fallback=["gemini-2.0-flash","gemini-1.5-flash","gemini-flash-latest","gemini-2.5-flash-lite"];
       fallback.forEach(m=>{ html+=`<span class="badge ${m===currentModel?'active':''}" onclick="selectModel('${m}')">${m.replace('gemini-','')}</span>`; });
-      addTerminalLog('warn','loadModels fallback '+e);
+      if(topSelect){
+        topSelect.innerHTML=fallback.map(m=>`<option value="${m}" ${m===currentModel?'selected':''}>${m} (fallback)</option>`).join('');
+      }
+      addTerminalLog('warn','[MODELS] fallback '+e);
     }
   }
   if(groqKey){
     try{
       const r2=await fetch('https://api.groq.com/openai/v1/models',{headers:{'Authorization':'Bearer '+groqKey}});
       const j2=await r2.json();
-      if(j2.data){ html+='<div class="small" style="margin-top:6px">Groq:</div>'; j2.data.slice(0,6).forEach(m=>{ html+=`<span class="badge ${('groq/'+m.id)===currentModel?'active':''}" onclick="selectModel('groq/${m.id}')">${m.id.slice(0,15)}</span>`; }); }
+      if(j2.data){ 
+        html+='<div class="small" style="margin-top:6px">Groq:</div>'; 
+        j2.data.slice(0,6).forEach(m=>{ html+=`<span class="badge ${('groq/'+m.id)===currentModel?'active':''}" onclick="selectModel('groq/${m.id}')">${m.id.slice(0,15)}</span>`; }); 
+        if(topSelect){
+          j2.data.forEach(m=>{
+            const opt=document.createElement('option');
+            opt.value='groq/'+m.id;
+            opt.textContent='groq/'+m.id;
+            if(('groq/'+m.id)===currentModel) opt.selected=true;
+            topSelect.appendChild(opt);
+          });
+        }
+      }
     }catch(e){}
   }
   if(!html) html='<span class="small">Введи ключ в ⚙️</span>';
   div.innerHTML=html;
   document.getElementById('curModel').textContent=currentModel.replace('gemini-','');
-  document.getElementById('topModel').textContent=currentModel.replace('gemini-','').slice(0,12);
-  addTerminalLog('info','Модели загружены');
+  const topModelEl=document.getElementById('topModel');
+  if(topModelEl) topModelEl.textContent=currentModel.replace('gemini-','').slice(0,12);
+  addTerminalLog('info','Модели загружены, текущая '+currentModel);
 }
 function selectModel(m){
   currentModel=m; localStorage.setItem('selectedModel',m);
-  document.getElementById('curModel').textContent=m.replace('gemini-','');
-  document.getElementById('topModel').textContent=m.replace('gemini-','').slice(0,12);
+  const curEl=document.getElementById('curModel'); if(curEl) curEl.textContent=m.replace('gemini-','');
+  const topEl=document.getElementById('topModel'); if(topEl) topEl.textContent=m.replace('gemini-','').slice(0,12);
+  const topSel=document.getElementById('topModelSelect'); if(topSel) topSel.value=m;
   loadModels(); addMessage('system','Модель: '+m);
   addTerminalLog('ok','Модель выбрана '+m);
 }
@@ -1340,6 +1393,94 @@ function setupKeepAlive(){
   }, interval);
   addTerminalLog('info','Keepalive '+interval/1000+'s');
 }
+
+// ===== LIVE MODE - ГОЛОСОМ КАК В ЗВОНКЕ =====
+let liveMode=false;
+let recognition=null;
+let synth=window.speechSynthesis;
+
+function toggleLiveMode(){
+  liveMode=!liveMode;
+  const btn=document.getElementById('liveBtn');
+  if(liveMode){
+    btn.style.background='linear-gradient(90deg, #ff0040, #ff00e5)';
+    btn.style.color='#fff';
+    btn.style.boxShadow='0 0 30px rgba(255,0,100,0.5)';
+    btn.textContent='🔴 LIVE ON';
+    addMessage('system','🔴 LIVE режим включен! Говори как в звонке — я отвечаю голосом!\n\n• Нажми 🎤 в поле ввода чтобы говорить\n• ИИ отвечает голосом как в звонке\n• Включи микрофон в браузере');
+    addTerminalLog('ok','LIVE режим включен');
+    startLiveRecognition();
+  } else {
+    btn.style.background='rgba(255,0,100,0.15)';
+    btn.style.color='#ff4d8a';
+    btn.style.boxShadow='none';
+    btn.textContent='🔴 LIVE';
+    addMessage('system','⚪ LIVE выключен');
+    addTerminalLog('info','LIVE выключен');
+    if(recognition) recognition.stop();
+    if(synth) synth.cancel();
+  }
+}
+
+function startLiveRecognition(){
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    addMessage('system','❌ Браузер не поддерживает голосовой ввод. Используй Chrome на телефоне/ПК. LIVE будет только озвучивать ответы.');
+    addTerminalLog('warn','SpeechRecognition не поддерживается');
+    return;
+  }
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SpeechRecognition();
+  recognition.lang='ru-RU';
+  recognition.continuous=false;
+  recognition.interimResults=false;
+  
+  recognition.onstart=()=>{ addTerminalLog('info','[LIVE] 🎤 Слушаю... говори!'); addMessage('system','🎤 Слушаю...'); };
+  recognition.onresult=(e)=>{
+    const transcript=e.results[0][0].transcript;
+    addTerminalLog('ok',`[LIVE] 👤 Распознано: "${transcript}"`);
+    document.getElementById('msgInput').value=transcript;
+    sendMsg();
+  };
+  recognition.onerror=(e)=>{ addTerminalLog('err','[LIVE] Ошибка распознавания '+e.error); };
+  recognition.onend=()=>{
+    if(liveMode){
+      setTimeout(()=>{ try{ recognition.start(); }catch(e){} }, 1000);
+    }
+  };
+  try{ recognition.start(); }catch(e){ addTerminalLog('err','LIVE start fail '+e.message); }
+}
+
+function speakLive(text){
+  if(!liveMode) return;
+  if(!synth) return;
+  synth.cancel();
+  const utter=new SpeechSynthesisUtterance(text);
+  utter.lang='ru-RU';
+  utter.rate=1.0;
+  utter.pitch=1.0;
+  utter.volume=1.0;
+  // Выбираем русский голос если есть
+  const voices=synth.getVoices();
+  const ruVoice=voices.find(v=>v.lang.includes('ru'))||voices[0];
+  if(ruVoice) utter.voice=ruVoice;
+  addTerminalLog('info',`[LIVE] 🔊 Озвучиваю: "${text.slice(0,80)}..." голосом ${ruVoice?ruVoice.name:'default'}`);
+  utter.onstart=()=>addTerminalLog('ok','[LIVE] 🔊 Говорю...');
+  utter.onend=()=>addTerminalLog('ok','[LIVE] ✅ Озвучил');
+  utter.onerror=(e)=>addTerminalLog('err','[LIVE] Ошибка озвучки '+e.error);
+  synth.speak(utter);
+}
+
+// Перехватываем ответы ИИ для LIVE озвучки
+const origAddMessage=addMessage;
+addMessage=function(role,text,silent){
+  const el=origAddMessage(role,text,silent);
+  if(role==='ai' && liveMode && !silent){
+    // Озвучиваем ответ ИИ голосом как в звонке
+    const cleanText=text.replace(/<[^>]*>/g,'').slice(0,500);
+    setTimeout(()=>speakLive(cleanText), 300);
+  }
+  return el;
+};
 
 async function execLinux(){
   const cmd=document.getElementById('linuxCmd').value.trim(); if(!cmd) return;
