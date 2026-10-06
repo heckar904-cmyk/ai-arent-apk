@@ -70,6 +70,11 @@ body{display:flex}
 .mode-tabs{display:flex;gap:6px;margin:8px 0}
 .mode-tab{flex:1;padding:8px;border-radius:8px;background:#111;border:1px solid #222;font-size:12px;text-align:center;cursor:pointer;color:#888}
 .mode-tab.active{background:#fff;color:#000;border-color:#fff;font-weight:600}
+@keyframes fadeIn{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes typing{ 0%{opacity:0.3} 50%{opacity:1} 100%{opacity:0.3} }
+.typing span{display:inline-block;width:6px;height:6px;background:#888;border-radius:50%;margin:0 2px;animation:typing 1.2s infinite}
+.typing span:nth-child(2){animation-delay:0.2s}
+.typing span:nth-child(3){animation-delay:0.4s}
 </style>
 </head>
 <body>
@@ -337,8 +342,17 @@ function initApp(){
   document.getElementById('userInfo').textContent=`${currentUser} ${users[currentUser]?.role==='admin'?'admin':'guest'}`;
   renderChatList();
   if(!currentChatId||!chats[currentChatId]) newChat(); else loadChat(currentChatId);
-  document.getElementById('geminiKey').value=localStorage.getItem('gemini')||'';
-  document.getElementById('groqKey').value=localStorage.getItem('groq')||'';
+  // Загружаем ключи с авто-сохранением
+  const savedGemini=localStorage.getItem('gemini')||'';
+  const savedGroq=localStorage.getItem('groq')||'';
+  document.getElementById('geminiKey').value=savedGemini;
+  document.getElementById('groqKey').value=savedGroq;
+  // Авто-сохранение при вводе
+  document.getElementById('geminiKey').addEventListener('input',e=>{ localStorage.setItem('gemini', e.target.value.trim()); checkKeys(); });
+  document.getElementById('groqKey').addEventListener('input',e=>{ localStorage.setItem('groq', e.target.value.trim()); });
+  document.getElementById('githubPat').addEventListener('input',e=>{ localStorage.setItem('githubPat', e.target.value.trim()); });
+  document.getElementById('codespaceUrl').addEventListener('input',e=>{ localStorage.setItem('codespaceUrl', e.target.value.trim()); });
+  
   const defaultReplitUrl="https://my-agent--heckar904.replit.app";
   if(!localStorage.getItem('codespaceUrl')) localStorage.setItem('codespaceUrl', defaultReplitUrl);
   document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||defaultReplitUrl;
@@ -366,9 +380,11 @@ function initApp(){
   });
   checkKeys(); renderTasks(); renderGuestRequests(); renderGuestList(); checkLinuxReal(); showAdminNotifs();
   if(localStorage.getItem('gemini')||localStorage.getItem('groq')) loadModels();
+  // Загружаем с облака для кросс-девайс синхронизации
+  loadKeysFromCloud().then(()=>{ checkKeys(); loadModels(); });
   document.getElementById('curModel').textContent=currentModel;
   document.getElementById('topModel').textContent=currentModel.replace('gemini-','').slice(0,12);
-  document.getElementById('appVersion').textContent='1.0.11-always-on';
+  document.getElementById('appVersion').textContent='1.0.16-persist-chatgpt';
   setupKeepAlive();
   if(localStorage.getItem('autoWake')!=='0' && localStorage.getItem('githubPat')){
     setTimeout(()=>{ 
@@ -404,13 +420,38 @@ function addMessage(role,text,silent){
   const chatEl=document.getElementById('chatInner');
   const div=document.createElement('div');
   div.className='bubble '+(role==='me'?'me':role==='system'?'system':'ai');
-  div.textContent=text;
-  // wrapper for alignment
+  // Markdown like ChatGPT
+  let html=text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
+    .replace(/\*(.*?)\*/g,'<i>$1</i>')
+    .replace(/```([\s\S]*?)```/g,'<pre style="background:#0a0a0a;border:1px solid #222;border-radius:8px;padding:10px;overflow:auto;margin:8px 0"><code>$1</code></pre>')
+    .replace(/`([^`]+)`/g,'<code style="background:#222;padding:2px 6px;border-radius:4px">$1</code>')
+    .replace(/\n/g,'<br>');
+  div.innerHTML=html;
+  // wrapper
   const wrap=document.createElement('div');
   wrap.style.display='flex';
   wrap.style.flexDirection='column';
   wrap.style.width='100%';
-  wrap.appendChild(div);
+  wrap.style.animation='fadeIn 0.3s ease';
+  // Avatar like ChatGPT
+  if(role!=='system'){
+    const ava=document.createElement('div');
+    ava.style.display='flex';
+    ava.style.gap='8px';
+    ava.style.alignItems='flex-start';
+    ava.style.width='100%';
+    const icon=document.createElement('div');
+    icon.style.width='28px'; icon.style.height='28px'; icon.style.borderRadius='50%'; icon.style.display='flex'; icon.style.alignItems='center'; icon.style.justifyContent='center'; icon.style.fontSize='14px'; icon.style.flexShrink='0';
+    if(role==='me'){ icon.style.background='#fff'; icon.style.color='#000'; icon.textContent='🧑'; }
+    else { icon.style.background='#10a37f'; icon.style.color='#fff'; icon.textContent='🤖'; }
+    ava.appendChild(icon);
+    ava.appendChild(div);
+    wrap.appendChild(ava);
+  } else {
+    wrap.appendChild(div);
+  }
   chatEl.appendChild(wrap);
   document.getElementById('chat').scrollTop=document.getElementById('chat').scrollHeight;
   if(!silent && currentChatId && chats[currentChatId]){
@@ -437,10 +478,79 @@ function saveKeys(){
   const groq=document.getElementById('groqKey').value.trim();
   if(g) localStorage.setItem('gemini',g);
   if(groq) localStorage.setItem('groq',groq);
+  const url=document.getElementById('codespaceUrl').value.trim();
+  const pat=document.getElementById('githubPat').value.trim();
+  if(url) localStorage.setItem('codespaceUrl',url);
+  if(pat) localStorage.setItem('githubPat',pat);
+  const extraInputs=document.querySelectorAll('.extra-pat');
+  const extraPats=Array.from(extraInputs).map(i=>i.value.trim()).filter(v=>v);
+  localStorage.setItem('extraPats', JSON.stringify(extraPats));
   checkKeys(); loadModels();
-  addMessage('system','Ключи сохранены.');
+  addMessage('system','Ключи сохранены и не пропадут при перезагрузке! Авто-сохранение включено.');
+  // Пытаемся сохранить в облако если есть PAT
+  syncKeysToCloud();
 }
-function checkKeys(){
+
+async function syncKeysToCloud(){
+  const pat=localStorage.getItem('githubPat');
+  if(!pat) return;
+  try{
+    const gemini=localStorage.getItem('gemini')||'';
+    const groq=localStorage.getItem('groq')||'';
+    const codespaceUrl=localStorage.getItem('codespaceUrl')||'';
+    const extraPats=localStorage.getItem('extraPats')||'[]';
+    // Сохраняем в Gist приватный для кросс-девайс синхронизации
+    const gistData={
+      description: "AI Agent keys backup - private",
+      public: false,
+      files: {
+        "ai-agent-keys.json": {
+          content: JSON.stringify({gemini, groq, codespaceUrl, extraPats, updated: new Date().toISOString()}, null, 2)
+        }
+      }
+    };
+    // Пробуем найти существующий gist
+    const listRes=await fetch('https://api.github.com/gists',{headers:{'Authorization':'token '+pat}});
+    const gists=await listRes.json();
+    let existing=gists.find(g=>g.files && g.files['ai-agent-keys.json']);
+    if(existing){
+      await fetch(`https://api.github.com/gists/${existing.id}`,{
+        method:'PATCH',
+        headers:{'Authorization':'token '+pat,'Content-Type':'application/json'},
+        body:JSON.stringify({files:{"ai-agent-keys.json":{content: gistData.files['ai-agent-keys.json'].content}}})
+      });
+      console.log('Keys synced to existing gist', existing.id);
+    } else {
+      const createRes=await fetch('https://api.github.com/gists',{
+        method:'POST',
+        headers:{'Authorization':'token '+pat,'Content-Type':'application/json'},
+        body:JSON.stringify(gistData)
+      });
+      const created=await createRes.json();
+      console.log('Keys synced to new gist', created.id);
+    }
+  }catch(e){ console.log('Cloud sync failed', e); }
+}
+
+async function loadKeysFromCloud(){
+  const pat=localStorage.getItem('githubPat');
+  if(!pat) return;
+  try{
+    const listRes=await fetch('https://api.github.com/gists',{headers:{'Authorization':'token '+pat}});
+    const gists=await listRes.json();
+    let existing=gists.find(g=>g.files && g.files['ai-agent-keys.json']);
+    if(existing){
+      const content=existing.files['ai-agent-keys.json'].content;
+      const data=JSON.parse(content);
+      if(data.gemini && !localStorage.getItem('gemini')){ localStorage.setItem('gemini', data.gemini); document.getElementById('geminiKey').value=data.gemini; }
+      if(data.groq && !localStorage.getItem('groq')){ localStorage.setItem('groq', data.groq); document.getElementById('groqKey').value=data.groq; }
+      if(data.codespaceUrl && !localStorage.getItem('codespaceUrl')){ localStorage.setItem('codespaceUrl', data.codespaceUrl); document.getElementById('codespaceUrl').value=data.codespaceUrl; }
+      if(data.extraPats){ localStorage.setItem('extraPats', data.extraPats); }
+      console.log('Keys loaded from cloud gist');
+      addMessage('system','🔄 Ключи загружены с облака (с другого устройства)!');
+    }
+  }catch(e){ console.log('Load from cloud failed', e); }
+}
   const g=localStorage.getItem('gemini');
   const el=document.getElementById('keyStatus');
   if(g){ el.textContent='Gemini ключ есть. Стабильные: 2.0-flash, 1.5-flash.'; el.style.color='#4ade80'; }
