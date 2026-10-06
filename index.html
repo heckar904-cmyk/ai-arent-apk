@@ -141,8 +141,10 @@ body{display:flex}
 <button class="btn2 btn" style="padding:6px;font-size:11px;flex:1" onclick="checkLinuxReal()">Проверить</button>
 </div>
 <div style="margin-top:6px">
-<div class="switch" style="padding:6px;font-size:11px"><span>Авто-пробуждение</span><input type="checkbox" id="autoWakeToggle" checked></div>
-<div class="switch" style="padding:6px;font-size:11px"><span>Не давать засыпать</span><input type="checkbox" id="keepAliveToggle"></div>
+<div class="switch" style="padding:8px;font-size:12px;background:#2a1a1a;border-color:#5a2a2a"><span>🔥 Всегда включен 24/7</span><input type="checkbox" id="alwaysOnToggle"></div>
+<div class="small" style="color:#f88;margin-top:2px">Тратит 60ч/мес бесплатно, потом $0.18/ч. Если включено - не спит никогда!</div>
+<div class="switch" style="padding:6px;font-size:11px"><span>Авто-пробуждение при входе</span><input type="checkbox" id="autoWakeToggle" checked></div>
+<div class="switch" style="padding:6px;font-size:11px"><span>Keepalive (пинг 2 мин)</span><input type="checkbox" id="keepAliveToggle"></div>
 </div>
 <div id="codespaceList" style="margin-top:6px;display:none">
 <div class="small" style="color:#aaa">Codespaces:</div>
@@ -334,17 +336,34 @@ function initApp(){
   document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||'';
   document.getElementById('githubPat').value=localStorage.getItem('githubPat')||'';
   document.getElementById('autoWakeToggle').checked=localStorage.getItem('autoWake')!=='0';
-  document.getElementById('keepAliveToggle').checked=localStorage.getItem('keepAlive')==='1';
+  document.getElementById('keepAliveToggle').checked=localStorage.getItem('keepAlive')==='1' || localStorage.getItem('alwaysOn')==='1';
+  document.getElementById('alwaysOnToggle').checked=localStorage.getItem('alwaysOn')==='1';
   document.getElementById('autoWakeToggle').addEventListener('change',e=>{ localStorage.setItem('autoWake',e.target.checked?'1':'0'); });
   document.getElementById('keepAliveToggle').addEventListener('change',e=>{ localStorage.setItem('keepAlive',e.target.checked?'1':'0'); setupKeepAlive(); });
+  document.getElementById('alwaysOnToggle').addEventListener('change',e=>{
+    localStorage.setItem('alwaysOn',e.target.checked?'1':'0');
+    if(e.target.checked){
+      localStorage.setItem('keepAlive','1');
+      localStorage.setItem('autoWake','1');
+      document.getElementById('keepAliveToggle').checked=true;
+      document.getElementById('autoWakeToggle').checked=true;
+      addMessage('system','🔥 Всегда включен активирован! Linux будет работать 24/7, тратит 60ч/мес бесплатно. Авто-сон отключен. GitHub Action каждые 10 мин будет будить даже когда сайт закрыт.');
+    } else {
+      addMessage('system','Всегда включен выключен. Теперь будет засыпать через 30 мин как обычно.');
+    }
+    setupKeepAlive();
+  });
   checkKeys(); renderTasks(); renderGuestRequests(); renderGuestList(); checkLinuxReal(); showAdminNotifs();
   if(localStorage.getItem('gemini')||localStorage.getItem('groq')) loadModels();
   document.getElementById('curModel').textContent=currentModel;
   document.getElementById('topModel').textContent=currentModel.replace('gemini-','').slice(0,12);
-  document.getElementById('appVersion').textContent='1.0.8-auto';
+  document.getElementById('appVersion').textContent='1.0.11-always-on';
   setupKeepAlive();
   if(localStorage.getItem('autoWake')!=='0' && localStorage.getItem('githubPat')){
-    setTimeout(()=>{ if(document.getElementById('linuxStatus').textContent.includes('спит') || document.getElementById('linuxStatus').textContent.includes('проверка')) autoWakeLinux(); }, 3000);
+    setTimeout(()=>{ 
+      const st=document.getElementById('linuxStatus').textContent;
+      if(st.includes('спит') || st.includes('проверка') || st.includes('выкл') || st.includes('нет')) autoWakeLinux(); 
+    }, 2000);
   }
 }
 
@@ -759,12 +778,36 @@ function useCodespaceUrl(name){ const url=`https://${name}-3000.app.github.dev`;
 let keepAliveInterval=null;
 function setupKeepAlive(){
   if(keepAliveInterval) clearInterval(keepAliveInterval);
-  const enabled=localStorage.getItem('keepAlive')==='1';
+  const alwaysOn=localStorage.getItem('alwaysOn')==='1';
+  const enabled=localStorage.getItem('keepAlive')==='1' || alwaysOn;
   if(!enabled) return;
-  const url=localStorage.getItem('codespaceUrl'); if(!url) return;
+  const url=localStorage.getItem('codespaceUrl'); 
+  const pat=localStorage.getItem('githubPat');
+  // Интервал: если всегда включен - каждые 2 мин, иначе 10 мин
+  const interval = alwaysOn ? 2*60*1000 : 10*60*1000;
   keepAliveInterval=setInterval(async()=>{
-    try{ const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),5000); await fetch(url+'/keepalive',{signal:ctrl.signal}).catch(()=>{}); console.log('keepalive'); }catch(e){}
-  }, 10*60*1000);
+    try{ 
+      if(url){
+        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),5000); 
+        await fetch(url+'/keepalive',{signal:ctrl.signal}).catch(()=>{});
+        await fetch(url+'/status',{signal:ctrl.signal}).catch(()=>{});
+      }
+      // Если всегда включен - еще и через API будим если вдруг уснул
+      if(alwaysOn && pat){
+        try{
+          const res=await fetch('https://api.github.com/user/codespaces',{headers:{'Authorization':'token '+pat}});
+          const data=await res.json();
+          const target=data.codespaces?.find(c=>c.repository?.full_name==='heckar904-cmyk/my-agent');
+          if(target && target.state!=='Available'){
+            console.log('AlwaysOn: waking', target.name, target.state);
+            await fetch(`https://api.github.com/user/codespaces/${target.name}/start`,{method:'POST',headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json'}});
+          }
+        }catch(e){ console.log('keepalive API error', e); }
+      }
+      console.log('keepalive ping', new Date().toISOString(), alwaysOn?'ALWAYS ON':'normal');
+    }catch(e){}
+  }, interval);
+  console.log(`Keepalive setup: ${interval/1000}sec, alwaysOn=${alwaysOn}`);
 }
 
 async function execLinux(){
