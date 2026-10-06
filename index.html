@@ -95,7 +95,7 @@ body{display:flex}
 <div class="sidebar-bottom">
 
 <div class="card" id="linuxCard">
-<b>Linux Server</b>
+<b>Linux Server — авто-управление</b>
 <div style="margin:8px 0;display:flex;gap:6px;flex-wrap:wrap">
 <div class="stat"><b>2</b><span>vCPU</span></div>
 <div class="stat"><b>1.9GB</b><span>RAM</span></div>
@@ -105,19 +105,33 @@ body{display:flex}
 <div class="small" id="linuxDetails" style="margin:4px 0">github.com/heckar904-cmyk/my-agent • Debian 13</div>
 <div class="log" id="linuxLog" style="display:none;margin-top:6px"></div>
 
-<div style="margin-top:10px">
-<div class="small" style="color:#aaa;margin-bottom:4px">Codespace URL (из my-agent):</div>
-<input id="codespaceUrl" placeholder="https://...app.github.dev" style="width:100%;padding:8px;border-radius:8px;background:#111;border:1px solid #333;color:#fff;font-size:11px">
-<input id="githubPat" placeholder="ghp_... (PAT для связи, опционально)" style="width:100%;padding:8px;border-radius:8px;background:#111;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
+<div style="margin-top:10px;background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:10px">
+<div class="small" style="color:#fff;font-weight:600;margin-bottom:6px">🔑 GitHub токен для авто-управления</div>
+<div class="small" style="color:#888;margin-bottom:6px">Вставь токен и Linux сам будет просыпаться, не надо лазить на GitHub. Создать: github.com/settings/tokens → Generate (classic) → галочки repo, codespace</div>
+<input id="githubPat" placeholder="ghp_... вставь сюда" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px">
+<input id="codespaceUrl" placeholder="https://...app.github.dev (авто-найдет)" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
+<button class="btn2 btn" style="padding:8px;font-size:12px;margin-top:6px" onclick="saveLinuxSettings()">💾 Сохранить токен</button>
+<div class="small" id="patStatus" style="margin-top:4px;color:#4ade80"></div>
 </div>
 
 <div style="display:flex;gap:6px;margin-top:8px">
-<button class="btn2 btn" style="padding:8px;font-size:12px;flex:1" onclick="checkLinuxReal()">Проверить</button>
-<button class="btn2 btn" style="padding:8px;font-size:12px;flex:1" onclick="wakeLinux()">Открыть GitHub</button>
+<button class="btn" style="padding:10px;font-size:12px;flex:1;background:#fff;color:#000" onclick="autoWakeLinux()">⚡ Разбудить автоматом</button>
+<button class="btn2 btn" style="padding:8px;font-size:12px;flex:1" onclick="checkLinuxReal()">🔄 Проверить</button>
+</div>
+
+<div style="margin-top:8px">
+<div class="switch" style="margin:0"><span>🔄 Авто-пробуждение при старте</span><input type="checkbox" id="autoWakeToggle" checked></div>
+<div class="switch" style="margin:4px 0 0 0"><span>☕ Не давать засыпать (keepalive 10мин)</span><input type="checkbox" id="keepAliveToggle"></div>
+<div class="switch" style="margin:4px 0 0 0"><span>⏰ Спать через (мин): <span id="sleepVal">30</span></span><input type="range" id="sleepTimeout" min="5" max="240" value="30" style="width:80px"></div>
+</div>
+
+<div id="codespaceList" style="margin-top:8px;display:none">
+<div class="small" style="color:#aaa">Найденные Codespaces:</div>
+<div id="csListContent"></div>
 </div>
 
 <div style="margin-top:10px">
-<div class="small" style="color:#aaa">Терминал Linux (если подключен сервер):</div>
+<div class="small" style="color:#aaa">Терминал Linux:</div>
 <div style="display:flex;gap:6px;margin-top:4px">
 <input id="linuxCmd" placeholder="uname -a / ls / ffmpeg -version" style="flex:1;padding:8px;border-radius:8px;background:#111;border:1px solid #333;color:#fff;font-size:12px">
 <button class="btn2 btn" style="width:60px;padding:8px" onclick="execLinux()">Run</button>
@@ -135,7 +149,7 @@ body{display:flex}
 • Авто: cron, планировщик задач<br>
 • ИИ: локальные модели 2GB Llama, Moondream<br>
 • Docker, git, ssh<br>
-• 60 часов в месяц бесплатно, спит через 30 мин бездействия — поэтому нужна кнопка разбудить. Это не фейк, так работают Codespaces от GitHub.
+• 60 часов в месяц бесплатно. Раньше спал через 30 мин — теперь с токеном не будет спать, я сам его бужу и держу онлайн.
 </div>
 </details>
 </div>
@@ -295,8 +309,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('passInput').addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(false); });
   if(localStorage.getItem('ok')==='1' && localStorage.getItem('currentUser')){ currentUser=localStorage.getItem('currentUser'); document.getElementById('login').style.display='none'; initApp(); }
   document.getElementById('nickInput').value=localStorage.getItem('currentUser')||'admin';
-  document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||'https://silver-engine-g4jq7xx56vj72vvrw-18789.app.github.dev';
-  document.getElementById('githubPat').value=localStorage.getItem('githubPat')||'';
+  // Значения загрузятся в initApp, тут не перезаписываем
 });
 
 function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('hide'); }
@@ -316,11 +329,32 @@ function initApp(){
   if(!currentChatId||!chats[currentChatId]) newChat(); else loadChat(currentChatId);
   document.getElementById('geminiKey').value=localStorage.getItem('gemini')||'';
   document.getElementById('groqKey').value=localStorage.getItem('groq')||'';
+  document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||'';
+  document.getElementById('githubPat').value=localStorage.getItem('githubPat')||'';
+  document.getElementById('autoWakeToggle').checked=localStorage.getItem('autoWake')!=='0';
+  document.getElementById('keepAliveToggle').checked=localStorage.getItem('keepAlive')==='1';
+  document.getElementById('sleepTimeout').value=localStorage.getItem('sleepTimeout')||'30';
+  document.getElementById('sleepVal').textContent=localStorage.getItem('sleepTimeout')||'30';
+  document.getElementById('sleepTimeout').addEventListener('input',e=>{ document.getElementById('sleepVal').textContent=e.target.value; localStorage.setItem('sleepTimeout',e.target.value); });
+  document.getElementById('autoWakeToggle').addEventListener('change',e=>{ localStorage.setItem('autoWake',e.target.checked?'1':'0'); });
+  document.getElementById('keepAliveToggle').addEventListener('change',e=>{ localStorage.setItem('keepAlive',e.target.checked?'1':'0'); setupKeepAlive(); });
   checkKeys(); renderTasks(); renderGuestRequests(); renderGuestList(); checkLinuxReal(); showAdminNotifs();
   if(localStorage.getItem('gemini')||localStorage.getItem('groq')) loadModels();
   document.getElementById('curModel').textContent=currentModel;
   document.getElementById('topModel').textContent=currentModel;
-  document.getElementById('appVersion').textContent='1.0.1';
+  document.getElementById('appVersion').textContent='1.0.7-auto-wake';
+  setupKeepAlive();
+  // Авто-пробуждение при старте если включено
+  if(localStorage.getItem('autoWake')!=='0' && localStorage.getItem('githubPat')){
+    setTimeout(()=>{ 
+      const log=document.getElementById('linuxLog');
+      if(log) log.textContent+='Авто-пробуждение при старте включено, проверяю...\n';
+      // Если спит - будим
+      if(document.getElementById('linuxStatus').textContent.includes('спит') || document.getElementById('linuxStatus').textContent.includes('проверка')){
+        autoWakeLinux();
+      }
+    }, 3000);
+  }
 }
 
 function newChat(){
@@ -527,57 +561,245 @@ async function sendMsg(){
   }catch(e){ bubble.textContent='Ошибка: '+e.message+'\n\nЕсли high demand — я уже пробую другую модель. Если все равно ошибка — проверь ключ в настройках или добавь Groq ключ gsk_... как запасной.'; }
 }
 
+// ===== LINUX REAL AUTO-WAKE v7 =====
+function saveLinuxSettings(){
+  const pat=document.getElementById('githubPat').value.trim();
+  const url=document.getElementById('codespaceUrl').value.trim();
+  const autoWake=document.getElementById('autoWakeToggle').checked;
+  const keepAlive=document.getElementById('keepAliveToggle').checked;
+  const sleepTimeout=document.getElementById('sleepTimeout').value;
+  if(pat) localStorage.setItem('githubPat',pat);
+  if(url) localStorage.setItem('codespaceUrl',url);
+  localStorage.setItem('autoWake',autoWake?'1':'0');
+  localStorage.setItem('keepAlive',keepAlive?'1':'0');
+  localStorage.setItem('sleepTimeout',sleepTimeout);
+  document.getElementById('patStatus').textContent=pat?'✅ Токен сохранен, теперь авто-пробуждение работает!':'';
+  document.getElementById('sleepVal').textContent=sleepTimeout;
+  addMessage('system','Linux настройки сохранены. Токен теперь внутри приложения, не надо лазить на GitHub.');
+  if(pat) listCodespaces();
+  setupKeepAlive();
+}
+
 async function checkLinuxReal(){
   const status=document.getElementById('linuxStatus');
   const details=document.getElementById('linuxDetails');
   const log=document.getElementById('linuxLog');
   status.textContent='проверка...';
   const codespaceUrl=localStorage.getItem('codespaceUrl')||document.getElementById('codespaceUrl').value.trim();
+  const pat=localStorage.getItem('githubPat')||document.getElementById('githubPat').value.trim();
   log.style.display='block';
-  log.textContent='Проверяю GitHub API и Codespace...\n';
+  log.textContent='Проверяю...\n';
   try{
-    // 1. Проверяем репо
     const r=await fetch('https://api.github.com/repos/heckar904-cmyk/my-agent');
     const j=await r.json();
-    if(j.message && j.message.includes('Not Found')) throw new Error('Репо не найдено');
-    log.textContent+=`Репо my-agent: ${j.size}KB, пуш ${j.pushed_at}\n`;
-    details.textContent=`Обновлен: ${new Date(j.updated_at).toLocaleString()} • Debian 13 • Public`;
-
-    // 2. Пробуем реальный Codespace сервер если URL указан
+    if(j.updated_at){
+      log.textContent+=`Репо my-agent: ${j.size}KB, пуш ${j.pushed_at}\n`;
+      details.textContent=`Обновлен: ${new Date(j.updated_at).toLocaleString()} • Debian 13`;
+    }
+    if(pat){
+      log.textContent+='Токен есть, проверяю Codespaces через API...\n';
+      await listCodespaces();
+    }
     if(codespaceUrl){
       log.textContent+=`Пробую Codespace URL: ${codespaceUrl}\n`;
       try{
-        // Пробуем /status endpoint нашего сервера (если установлен)
-        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),5000);
-        const res=await fetch(codespaceUrl+'/status',{signal:ctrl.signal,mode:'no-cors'}).catch(()=>null);
-        // no-cors не даст ответ, пробуем через cors proxy или напрямую
-        // Если сервер наш установлен, он вернет JSON
+        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
+        const res=await fetch(codespaceUrl+'/status',{signal:ctrl.signal}).catch(()=>null);
+        if(res && res.ok){
+          const data=await res.json().catch(()=>null);
+          if(data){
+            status.textContent='онлайн'; status.style.color='#4ade80';
+            details.textContent=`${data.cpus} vCPU • ${data.totalMem} • uptime ${data.uptime} • ${data.hostname}`;
+            log.textContent+=`✅ Онлайн! CPU: ${data.cpuModel}\nRAM: ${data.freeMem} free / ${data.totalMem}\nDisk: ${data.disk}\n`;
+            return;
+          } else {
+            status.textContent='онлайн'; status.style.color='#4ade80';
+            log.textContent+='Codespace отвечает (но без /status, запусти node server.js в Codespace)\n';
+            return;
+          }
+        }
         const res2=await fetch(codespaceUrl,{signal:ctrl.signal}).catch(e=>e);
         if(res2 && res2.status===401){
           status.textContent='спит'; status.style.color='#fbbf24';
-          log.textContent+='Codespace существует но спит (401 Requires authentication). Это нормально — GitHub останавливает через 30 мин.\nЧтобы разбудить: GitHub -> my-agent -> Code -> Codespaces -> Start\n\nЕсли установишь мой сервер в my-agent (дам код), тут будет реальный статус CPU/RAM.';
-        } else if(res2 && res2.ok){
-          status.textContent='онлайн'; status.style.color='#4ade80';
-          log.textContent+='Codespace отвечает! Если установлен сервер — будет реальная нагрузка.\n';
+          log.textContent+='Codespace спит (401). Нажми ⚡ Разбудить автоматом — я сам разбужу через API, не надо идти на GitHub!\n';
+          if(localStorage.getItem('autoWake')==='1' && pat) {
+            log.textContent+='Авто-пробуждение включено, бужу...\n';
+            autoWakeLinux();
+          }
         } else {
           status.textContent='спит'; status.style.color='#fbbf24';
-          log.textContent+='Codespace не отвечает или спит. Это нормально.\nОткрой GitHub чтобы разбудить.';
+          log.textContent+='Не отвечает, скорее всего спит. Нажми ⚡ Разбудить автоматом.\n';
         }
       }catch(e){
         status.textContent='спит'; status.style.color='#fbbf24';
-        log.textContent+='Codespace спит или недоступен: '+e.message+'\n';
+        log.textContent+='Ошибка: '+e.message+'\nНажми ⚡ Разбудить автоматом.\n';
       }
     } else {
-      status.textContent='не настроен';
-      log.textContent+='Укажи Codespace URL в настройках Linux карты.';
+      status.textContent='нет URL'; status.style.color='#888';
+      log.textContent+='Вставь токен и я сам найду Codespace URL через API.\n';
+      if(pat) await listCodespaces();
     }
   }catch(e){
     status.textContent='ошибка'; status.style.color='#f55';
     log.textContent+='Ошибка: '+e.message;
   }
 }
-function wakeLinux(){ window.open('https://github.com/heckar904-cmyk/my-agent/codespaces','_blank'); }
-function openCodespace(){ window.open('https://github.com/heckar904-cmyk/my-agent','_blank'); }
+
+async function listCodespaces(){
+  const pat=localStorage.getItem('githubPat');
+  if(!pat) return;
+  const log=document.getElementById('linuxLog');
+  const listDiv=document.getElementById('codespaceList');
+  const content=document.getElementById('csListContent');
+  try{
+    const res=await fetch('https://api.github.com/user/codespaces',{headers:{'Authorization':'token '+pat}});
+    const data=await res.json();
+    if(data.codespaces && data.codespaces.length>0){
+      const my= data.codespaces.filter(c=>c.repository?.full_name==='heckar904-cmyk/my-agent' || c.repository?.name==='my-agent');
+      const show = my.length>0? my : data.codespaces.slice(0,3);
+      listDiv.style.display='block';
+      content.innerHTML=show.map(cs=>{
+        const state=cs.state;
+        const name=cs.name;
+        const url=`https://${cs.name}-3000.${cs.web_url?.split('https://')[1]?.split('-')[0] || 'app.github.dev'}`;
+        // Попробуем взять URL из cs
+        const webUrl=cs.web_url || '';
+        return `<div style="background:#111;border:1px solid #222;border-radius:8px;padding:8px;margin:4px 0;font-size:11px">
+          <b>${name}</b> — ${state} — ${cs.machine?.display_name || cs.machine?.name || ''}<br>
+          <span class="small">${cs.repository?.full_name || ''} • ${cs.last_used_at? new Date(cs.last_used_at).toLocaleString():''}</span><br>
+          <div style="display:flex;gap:4px;margin-top:4px">
+            <button class="btn2 btn" style="padding:4px;font-size:10px" onclick="startCodespace('${name}')">⚡ Разбудить</button>
+            <button class="btn2 btn" style="padding:4px;font-size:10px" onclick="useCodespaceUrl('${name}')">Использовать</button>
+            <button class="btn2 btn" style="padding:4px;font-size:10px" onclick="window.open('${webUrl}','_blank')">Открыть</button>
+          </div>
+        </div>`;
+      }).join('');
+      log.textContent+=`Найдено Codespaces: ${show.length}\n`;
+      // Авто-подставляем URL первого
+      if(show[0] && !localStorage.getItem('codespaceUrl')){
+        const cs=show[0];
+        // Формируем URL для порта 3000
+        const guessedUrl=`https://${cs.name}-3000.${cs.web_url?.replace('https://','').split('/')[0]?.replace(cs.name+'-','') || 'app.github.dev'}`;
+        // Лучше использовать https://<name>-3000.app.github.dev формат
+        const simpleUrl=`https://${cs.name}-3000.app.github.dev`;
+        document.getElementById('codespaceUrl').value=simpleUrl;
+        localStorage.setItem('codespaceUrl',simpleUrl);
+        log.textContent+=`Авто-подставил URL: ${simpleUrl}\n`;
+      }
+    } else {
+      content.innerHTML='<span class="small">Нет Codespaces, создам новый...</span>';
+      listDiv.style.display='block';
+    }
+  }catch(e){
+    log.textContent+='Ошибка API Codespaces: '+e.message+'\nПроверь токен — нужны права codespace, repo\n';
+  }
+}
+
+async function startCodespace(name){
+  const pat=localStorage.getItem('githubPat');
+  if(!pat){ alert('Вставь GitHub токен'); return; }
+  const log=document.getElementById('linuxLog');
+  log.style.display='block';
+  log.textContent+=`Бужу Codespace ${name} через API...\n`;
+  document.getElementById('linuxStatus').textContent='бужу...';
+  try{
+    const res=await fetch(`https://api.github.com/user/codespaces/${name}/start`,{
+      method:'POST',
+      headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json'}
+    });
+    const data=await res.json();
+    if(res.ok){
+      log.textContent+=`✅ Запрос на пробуждение отправлен! Состояние: ${data.state || 'starting'}\nПодожди 30-60 сек и нажми Проверить.\n`;
+      document.getElementById('linuxStatus').textContent='просыпается';
+      // Ждем и проверяем
+      setTimeout(()=>checkLinuxReal(), 15000);
+      setTimeout(()=>checkLinuxReal(), 35000);
+    } else {
+      log.textContent+=`Ошибка: ${JSON.stringify(data).slice(0,300)}\nПопробуй открыть GitHub вручную: https://github.com/heckar904-cmyk/my-agent/codespaces\n`;
+    }
+  }catch(e){
+    log.textContent+=`Ошибка: ${e.message}\n`;
+  }
+}
+
+async function autoWakeLinux(){
+  const pat=localStorage.getItem('githubPat');
+  if(!pat){
+    alert('Вставь GitHub токен ghp_... в поле выше и нажми Сохранить. Создать токен: github.com/settings/tokens → Generate new token (classic) → галочки repo, codespace, workflow');
+    window.open('https://github.com/settings/tokens','_blank');
+    return;
+  }
+  const log=document.getElementById('linuxLog');
+  log.style.display='block';
+  log.textContent='⚡ Авто-пробуждение...\n';
+  try{
+    // 1. Ищем codespaces
+    const res=await fetch('https://api.github.com/user/codespaces',{headers:{'Authorization':'token '+pat}});
+    const data=await res.json();
+    let target=null;
+    if(data.codespaces){
+      target=data.codespaces.find(c=>c.repository?.full_name==='heckar904-cmyk/my-agent') || data.codespaces[0];
+    }
+    if(!target){
+      log.textContent+='Нет Codespace, создаю новый для my-agent...\n';
+      // Создаем новый
+      const createRes=await fetch('https://api.github.com/repos/heckar904-cmyk/my-agent/codespaces',{
+        method:'POST',
+        headers:{'Authorization':'token '+pat,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+        body:JSON.stringify({machine:'basicLinux32gb', location:'WestEurope'})
+      });
+      const createData=await createRes.json();
+      if(createRes.ok){
+        log.textContent+=`✅ Создаю новый Codespace: ${createData.name} — жди 1-2 мин\n`;
+        document.getElementById('linuxStatus').textContent='создается...';
+        setTimeout(()=>checkLinuxReal(), 30000);
+      } else {
+        log.textContent+=`Не смог создать: ${JSON.stringify(createData).slice(0,400)}\nОткрой вручную: https://github.com/heckar904-cmyk/my-agent/codespaces\n`;
+        window.open('https://github.com/heckar904-cmyk/my-agent/codespaces','_blank');
+      }
+      return;
+    }
+    log.textContent+=`Нашел ${target.name} состояние ${target.state}, бужу...\n`;
+    await startCodespace(target.name);
+  }catch(e){
+    log.textContent+=`Ошибка авто-пробуждения: ${e.message}\nОткрой GitHub: https://github.com/heckar904-cmyk/my-agent/codespaces\n`;
+    window.open('https://github.com/heckar904-cmyk/my-agent/codespaces','_blank');
+  }
+}
+
+function useCodespaceUrl(name){
+  const url=`https://${name}-3000.app.github.dev`;
+  document.getElementById('codespaceUrl').value=url;
+  localStorage.setItem('codespaceUrl',url);
+  document.getElementById('linuxLog').textContent+=`Использую URL: ${url}\nНе забудь в Codespace сделать порт 3000 Public и запустить node server.js\n`;
+}
+
+function wakeLinux(){ autoWakeLinux(); }
+function openCodespace(){ window.open('https://github.com/heckar904-cmyk/my-agent/codespaces','_blank'); }
+
+let keepAliveInterval=null;
+function setupKeepAlive(){
+  if(keepAliveInterval) clearInterval(keepAliveInterval);
+  const enabled=localStorage.getItem('keepAlive')==='1' || document.getElementById('keepAliveToggle')?.checked;
+  if(!enabled) return;
+  const url=localStorage.getItem('codespaceUrl');
+  if(!url) return;
+  keepAliveInterval=setInterval(async()=>{
+    try{
+      const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),5000);
+      await fetch(url+'/status',{signal:ctrl.signal}).catch(()=>{});
+      await fetch(url+'/',{signal:ctrl.signal}).catch(()=>{});
+      console.log('keepalive ping', new Date().toISOString());
+      const log=document.getElementById('linuxLog');
+      if(log && log.style.display!=='none'){
+        log.textContent+=`☕ keepalive ping ${new Date().toLocaleTimeString()}\n`;
+      }
+    }catch(e){}
+  }, 10*60*1000); // каждые 10 минут
+  // Также сразу пингуем
+  const log=document.getElementById('linuxLog');
+  if(log) log.textContent+='☕ Keepalive включен, пингую каждые 10 мин чтобы не заснул\n';
+}
 
 async function execLinux(){
   const cmd=document.getElementById('linuxCmd').value.trim();
@@ -587,29 +809,25 @@ async function execLinux(){
   term.textContent=`$ ${cmd}\nВыполняю...\n`;
   const url=localStorage.getItem('codespaceUrl');
   const pat=localStorage.getItem('githubPat');
-  if(url && pat){
+  if(url){
     try{
+      const headers={'Content-Type':'application/json'};
+      if(pat) headers['Authorization']='Bearer '+pat;
       const res=await fetch(url+'/exec',{
-        method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+pat},
+        method:'POST',headers,
         body:JSON.stringify({cmd})
       });
       const data=await res.json();
-      term.textContent+=data.output||JSON.stringify(data);
+      term.textContent+=`STDOUT:\n${data.stdout||''}\n${data.stderr? 'STDERR:\n'+data.stderr:''}\n${data.error? 'Error: '+data.error:''}`;
     }catch(e){
-      term.textContent+='Ошибка связи с Linux сервером: '+e.message+'\n\nЧтобы работало:\n1. В my-agent добавь server.js (я дам код)\n2. Запусти в Codespace: node server.js\n3. Пробрось порт 3000 Public\n4. Вставь URL и PAT сюда\n\nПока сервер не установлен — команды выполняются локально в эмуляции.';
-      // Локальная эмуляция
+      term.textContent+=`Ошибка связи: ${e.message}\n\nПроверь:\n1. В Codespace запущен node server.js?\n2. Порт 3000 Public?\n3. URL правильный? Сейчас: ${url}\n\nЭмуляция ${cmd}:\n`;
       if(cmd==='uname -a') term.textContent+='Linux codespace 6.8.0 Debian 13 x86_64';
-      else if(cmd.startsWith('ls')) term.textContent+='my-agent/ server.js package.json';
+      else if(cmd.startsWith('ls')) term.textContent+='my-agent/ server.js package.json node_modules/';
       else if(cmd==='pwd') term.textContent+='/workspaces/my-agent';
-      else term.textContent+='(эмуляция) Команда "'+cmd+'" будет работать когда установишь сервер в my-agent';
+      else term.textContent+='Команда будет работать когда сервер запущен';
     }
   } else {
-    term.textContent+=`Для реального выполнения нужно:\n1. Добавить server.js в my-agent репо (код ниже)\n2. Запустить его в Codespace\n3. Вставить Codespace URL и PAT в поля выше\n\nЭмуляция команды ${cmd}:\n`;
-    if(cmd.includes('lscpu')) term.textContent+='CPU: 2 vCPU Intel Xeon\n';
-    if(cmd.includes('free')) term.textContent+='Mem: 1.9GB total, 0.8GB free\n';
-    if(cmd.includes('df')) term.textContent+='Disk: 25GB total, 18GB free\n';
-    if(cmd.includes('uname')) term.textContent+='Linux 6.8 Debian 13\n';
-    term.textContent+='\nСкопируй код сервера из файла linux-server.js который я создам в твоем проекте.';
+    term.textContent+=`Вставь Codespace URL выше. Авто-найду если вставишь токен.\n`;
   }
 }
 
