@@ -339,7 +339,9 @@ function initApp(){
   if(!currentChatId||!chats[currentChatId]) newChat(); else loadChat(currentChatId);
   document.getElementById('geminiKey').value=localStorage.getItem('gemini')||'';
   document.getElementById('groqKey').value=localStorage.getItem('groq')||'';
-  document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||'';
+  const defaultReplitUrl="https://my-agent--heckar904.replit.app";
+  if(!localStorage.getItem('codespaceUrl')) localStorage.setItem('codespaceUrl', defaultReplitUrl);
+  document.getElementById('codespaceUrl').value=localStorage.getItem('codespaceUrl')||defaultReplitUrl;
   document.getElementById('githubPat').value=localStorage.getItem('githubPat')||'';
   // Загружаем доп токены
   const extraPats=JSON.parse(localStorage.getItem('extraPats')||'[]');
