@@ -615,6 +615,8 @@ async function loadKeysFromCloud(){
     }
   }catch(e){ console.log('Load from cloud failed', e); }
 }
+
+function checkKeys(){
   const g=localStorage.getItem('gemini');
   const el=document.getElementById('keyStatus');
   if(g){ el.textContent='Gemini ключ есть. Стабильные: 2.0-flash, 1.5-flash.'; el.style.color='#4ade80'; }
