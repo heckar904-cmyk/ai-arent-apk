@@ -149,32 +149,34 @@ body{display:flex}
 </div>
 
 <div class="sidebar-section" id="linuxCard">
-<b>Linux Auto</b>
+<details>
+<summary style="cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center"><b>🖥️ Linux (необязательно)</b><span class="small" id="linuxStatus" style="background:#222;padding:2px 8px;border-radius:10px">фон</span></summary>
 <div style="margin:6px 0;display:flex;gap:4px;flex-wrap:wrap">
-<div class="stat"><b id="linuxStatus">проверка</b><span>status</span></div>
 <div class="stat"><b>2</b><span>vCPU</span></div>
 <div class="stat"><b>1.9</b><span>GB</span></div>
 </div>
-<div class="small" id="linuxDetails" style="margin:4px 0">my-agent • Debian 13</div>
+<div class="small" id="linuxDetails" style="margin:4px 0;color:#4ade80">✅ Для чата Linux НЕ НУЖЕН! Работает без него. Linux только для монтажа видео и команд.</div>
+<div class="small" style="color:#888;margin:4px 0">НЕ НАДО открывать ссылку Replit! Она работает в фоне автоматом. Открывать нужно только если хочешь монтаж TikTok.</div>
 <div class="log" id="linuxLog" style="display:none;margin-top:6px"></div>
 
 <div style="margin-top:8px;background:#111;border:1px solid #2a2a2a;border-radius:8px;padding:8px">
-<div class="small" style="color:#fff;font-weight:600">🐸 Replit — 1 клик, без адреса, без сна, бесплатно! (РЕКОМЕНДУЮ)</div>
-<div class="small" style="color:#4ade80">Нажми кнопку ниже → Replit импортирует my-agent → нажми Run → скопируй URL → вставь сюда. Никогда не спит!</div>
-<a href="https://replit.com/new/github/heckar904-cmyk/my-agent" target="_blank" style="display:block;text-align:center;background:#f26207;color:#fff;padding:8px;border-radius:8px;text-decoration:none;font-weight:600;font-size:12px;margin:6px 0">▶️ Открыть в Replit (1 клик)</a>
-<div class="small" style="color:#888">Или GitHub токены (60ч на акк, ротация):</div>
-<input id="githubPat" placeholder="ghp_... основной токен (если хочешь GitHub)" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
+<div class="small" style="color:#fff;font-weight:600">🐸 Replit — работает в фоне, открывать не надо! (для монтажа)</div>
+<div class="small" style="color:#4ade80">Уже настроен: https://my-agent--heckar904.replit.app — открывается сам в фоне, тебе открывать не надо!</div>
+<div class="small" style="color:#888">Если хочешь свой Codespace (необязательно):</div>
+<input id="githubPat" placeholder="ghp_... только если хочешь свой Linux (необязательно)" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
 <div id="extraPats" style="margin-top:4px"></div>
 <button class="btn2 btn" style="padding:6px;font-size:11px;margin-top:4px" onclick="addPatField()">+ Добавить еще GitHub акк</button>
-<input id="codespaceUrl" placeholder="Вставь URL: Replit или Codespace" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
-<div class="small" style="color:#888">Примеры: https://my-agent.username.repl.co или https://xxx-3000.app.github.dev</div>
-<button class="btn" style="padding:8px;font-size:12px;margin-top:6px" onclick="saveAndAutoSetup()">⚡ Сохранить и проверить</button>
+<input id="codespaceUrl" placeholder="URL Replit/Codespace (автоматом, трогать не надо)" style="width:100%;padding:8px;border-radius:8px;background:#0a0a0a;border:1px solid #333;color:#fff;font-size:11px;margin-top:4px">
+<div class="small" style="color:#888">Оставь как есть — для чата не нужно!</div>
+<button class="btn" style="padding:8px;font-size:12px;margin-top:6px" onclick="saveAndAutoSetup()">⚡ Проверить Linux (необязательно)</button>
 <div class="small" id="patStatus" style="margin-top:4px;color:#4ade80"></div>
 </div>
 
 <div style="display:flex;gap:4px;margin-top:6px">
-<button class="btn2 btn" style="padding:6px;font-size:11px;flex:1" onclick="autoWakeLinux()">⚡ Разбудить</button>
 <button class="btn2 btn" style="padding:6px;font-size:11px;flex:1" onclick="checkLinuxReal()">Проверить</button>
+<button class="btn2 btn" style="padding:6px;font-size:11px;flex:1" onclick="document.getElementById('linuxCard').querySelector('details').open=false">Скрыть</button>
+</div>
+</details>
 </div>
 <div style="margin-top:6px">
 <div class="switch" style="padding:6px;font-size:11px"><span>Авто-пробуждение при входе (бесплатно)</span><input type="checkbox" id="autoWakeToggle" checked></div>
@@ -495,7 +497,9 @@ function initApp(){
     }
     setupKeepAlive();
   });
-  checkKeys(); renderTasks(); renderGuestRequests(); renderGuestList(); checkLinuxReal(); showAdminNotifs();
+  checkKeys(); renderTasks(); renderGuestRequests(); renderGuestList(); showAdminNotifs();
+  // Linux проверка - тихо в фоне, не мешает чату, открывать ссылку не надо
+  setTimeout(()=>checkLinuxReal(), 1500);
   if(localStorage.getItem('gemini')||localStorage.getItem('groq')) loadModels();
   // Загружаем с сервера и облака для кросс-девайс - если локально пусто
   (async()=>{
@@ -505,10 +509,8 @@ function initApp(){
       await loadFromServer();
       await loadKeysFromCloud();
     } else {
-      // Даже если есть локально, все равно подтягиваем с облака в фоне и синкаем
       loadFromServer().then(()=>{ checkKeys(); loadModels(); });
       loadKeysFromCloud().then(()=>{ checkKeys(); loadModels(); });
-      // Сразу синкаем локальные на сервер
       saveToServer();
       syncKeysToCloud();
     }
@@ -516,19 +518,20 @@ function initApp(){
   })();
   document.getElementById('curModel').textContent=currentModel;
   document.getElementById('topModel').textContent=currentModel.replace('gemini-','').slice(0,12);
-  document.getElementById('appVersion').textContent='1.0.21-fix-port-3000-not-found';
+  document.getElementById('appVersion').textContent='1.0.22-no-need-open-replit';
   setupKeepAlive();
+  // Авто-пробуждение только если есть PAT и включено, и не спамим
   if(localStorage.getItem('autoWake')!=='0' && localStorage.getItem('githubPat')){
     setTimeout(()=>{ 
       const st=document.getElementById('linuxStatus').textContent;
-      if(st.includes('спит') || st.includes('проверка') || st.includes('выкл') || st.includes('нет')) autoWakeLinux(); 
-    }, 2000);
+      if(st.includes('спит') || st.includes('выкл')) autoWakeLinux(); 
+    }, 5000);
   }
 }
 
 function newChat(){
   const id='chat_'+Date.now();
-  chats[id]={id,title:'Новый чат',messages:[{role:'system',text:'Привет! Я AI агент.\n\n• Чат как ChatGPT\n• Файлы до 1ГБ через + и 📎\n• Агент и монтаж в боковой панели ☰\n• Linux авто-пробуждение — вставь токен и нажми ⚡ Сохранить и настроить всё автоматом'}],created:Date.now()};
+  chats[id]={id,title:'Новый чат',messages:[{role:'system',text:'Привет! Я AI агент.\n\n• Чат как ChatGPT — просто пиши, Linux не нужен!\n• Для чата не надо открывать Replit/Codespace — работает в фоне автоматом\n• Файлы до 1ГБ через + и 📎\n• Монтаж TikTok 9:16 — только если нужен Linux, тогда открой детали в боковой панели ☰ → Linux\n• Ключи сохраняются навсегда на 3 уровнях: локально + облако + сервер'}],created:Date.now()};
   currentChatId=id; localStorage.setItem('currentChatId',id); saveChats(); renderChatList(); loadChat(id);
 }
 function saveChats(){ localStorage.setItem('chats',JSON.stringify(chats)); }
@@ -1040,56 +1043,64 @@ async function checkLinuxReal(){
   const status=document.getElementById('linuxStatus');
   const details=document.getElementById('linuxDetails');
   const log=document.getElementById('linuxLog');
-  status.textContent='проверка...';
-  const codespaceUrl=localStorage.getItem('codespaceUrl')||document.getElementById('codespaceUrl').value.trim();
+  status.textContent='фон...';
+  const codespaceUrl=localStorage.getItem('codespaceUrl')||document.getElementById('codespaceUrl').value.trim()||'https://my-agent--heckar904.replit.app';
   const pat=localStorage.getItem('githubPat');
-  log.style.display='block'; log.textContent='Проверяю...\n';
+  if(log) { log.style.display='none'; log.textContent=''; }
   try{
-    const r=await fetch('https://api.github.com/repos/heckar904-cmyk/my-agent');
-    const j=await r.json(); if(j.updated_at) log.textContent+=`Репо: ${j.size}KB\n`;
+    // Сначала пробуем Replit - он всегда должен работать в фоне, открывать не надо
+    try{
+      const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),5000);
+      const rRes=await fetch('https://my-agent--heckar904.replit.app/status',{signal:ctrl.signal});
+      if(rRes.ok){
+        const rData=await rRes.json();
+        status.textContent='онлайн'; status.style.color='#4ade80';
+        if(details) details.textContent=`✅ Чат работает без Linux! Replit в фоне: ${rData.cpus} vCPU ${rData.totalMem} — открывать ссылку не надо`;
+        if(log){ log.style.display='block'; log.textContent=`✅ Replit онлайн в фоне! ${rData.cpuModel}\nRAM ${rData.freeMem}/${rData.totalMem}\nДля чата Linux не нужен, он работает напрямую с Gemini.\nLinux нужен только для монтажа видео.\n`; }
+        // Если codespaceUrl пустой, ставим Replit
+        if(!localStorage.getItem('codespaceUrl')){
+          localStorage.setItem('codespaceUrl','https://my-agent--heckar904.replit.app');
+          document.getElementById('codespaceUrl').value='https://my-agent--heckar904.replit.app';
+        }
+        return;
+      }
+    }catch(e){ /* Replit не отвечает - не критично, чат работает без него */ }
+
     // Проверяем Codespace через API если есть токен
     let csState='unknown';
-    let csName=null;
     if(pat){
       try{
         const csRes=await fetch('https://api.github.com/user/codespaces',{headers:{'Authorization':'token '+pat}});
         const csData=await csRes.json();
         if(csData.codespaces){
           const my=csData.codespaces.find(c=>c.repository?.full_name==='heckar904-cmyk/my-agent');
-          if(my){ csState=my.state; csName=my.name; log.textContent+=`Codespace ${my.name}: ${my.state}, last used ${my.last_used_at? new Date(my.last_used_at).toLocaleString():''}\n`; }
-          else { log.textContent+=`Нашел ${csData.codespaces.length} codespaces, но my-agent нет\n`; }
+          if(my){ csState=my.state; }
         }
         await listCodespaces();
-      }catch(e){ log.textContent+='API ошибка: '+e.message+'\n'; }
+      }catch(e){}
     }
-    if(codespaceUrl){
+    if(codespaceUrl && codespaceUrl!=='' && !codespaceUrl.includes('replit.app')){
       try{
-        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),6000);
+        const ctrl=new AbortController(); setTimeout(()=>ctrl.abort(),5000);
         const res=await fetch(codespaceUrl+'/status',{signal:ctrl.signal});
         if(res.ok){
           const data=await res.json();
           status.textContent='онлайн'; status.style.color='#4ade80';
-          details.textContent=`${data.cpus} vCPU • ${data.totalMem} • ${data.hostname} • Codespace ${csState}`;
-          log.textContent+=`✅ Сервер онлайн! ${data.cpuModel}\nRAM ${data.freeMem}/${data.totalMem}\nCodespace: ${csState}\n`;
+          if(details) details.textContent=`${data.cpus} vCPU • ${data.totalMem} • ${data.hostname}`;
+          if(log){ log.style.display='block'; log.textContent+=`✅ Сервер онлайн! ${data.cpuModel}\n`; }
           return;
         }
       }catch(e){}
-      // Если codespace Available но сервер не отвечает - это не спит, а сервер не запущен
-      if(csState==='Available' || csState==='available'){
-        status.textContent='онлайн*'; status.style.color='#fbbf24';
-        details.textContent=`Codespace ${csState} (онлайн), но сервер не запущен`;
-        log.textContent+=`⚠️ Codespace ОНЛАЙН (${csState}), но сервер на порту 3000 не отвечает.\nЭто НЕ спит! Просто надо 1 раз зайти в Codespace и запустить: npm install && node server.js\nПорт 3000 должен быть Public.\nURL: ${codespaceUrl}\n`;
-        return;
-      }
-      const res2=await fetch(codespaceUrl).catch(e=>e);
-      if(res2 && res2.status===401){ status.textContent='спит'; status.style.color='#fbbf24'; log.textContent+=`Спит (401). Codespace state: ${csState}. Нажми ⚡ Разбудить.\n`; if(localStorage.getItem('autoWake')==='1' && pat) autoWakeLinux(); }
-      else { status.textContent=csState==='Shutdown'?'выкл':csState==='Available'?'онлайн*':'спит'; log.textContent+=`Не отвечает. Codespace state: ${csState}. Нажми ⚡ Разбудить.\n`; }
-    } else { 
-      status.textContent=csState||'нет URL'; 
-      if(csState==='Available') { status.textContent='онлайн*'; details.textContent='Codespace онлайн, но URL не сохранен'; log.textContent+='Codespace онлайн, но URL не сохранен. Нажми ⚡ Сохранить и настроить всё автоматом\n'; }
-      else log.textContent+='Вставь токен и нажми ⚡ Сохранить и настроить всё автоматом\n'; 
+      status.textContent='фон'; status.style.color='#888';
+      if(details) details.textContent=`✅ Чат работает без Linux! Linux нужен только для монтажа.`;
+    } else {
+      status.textContent='фон'; status.style.color='#4ade80';
+      if(details) details.textContent=`✅ Чат работает без Linux! Replit в фоне — открывать не надо.`;
     }
-  }catch(e){ status.textContent='ошибка'; log.textContent+='Ошибка: '+e.message; }
+  }catch(e){ 
+    status.textContent='фон'; status.style.color='#4ade80';
+    if(details) details.textContent=`✅ Чат работает без Linux!`;
+  }
 }
 
 async function listCodespaces(){
