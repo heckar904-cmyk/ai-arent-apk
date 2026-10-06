@@ -15,17 +15,21 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - uses: android-actions/setup-android@v3
-      - run: npm install
-      - run: npm run build
-      - run: |
+      - name: Install deps
+        run: npm install
+      - name: Build web
+        run: npm run build
+      - name: Add Android
+        run: |
           npx cap add android || echo "exists"
           npx cap sync
-      - run: |
+      - name: Build APK
+        run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
