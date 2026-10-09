@@ -1,0 +1,22 @@
+[Unit]
+Description=Twitch AI v3 REAL Linux Control 24/7
+After=network.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=/home/%i/twitch-ai-linux
+Environment=PATH=/home/%i/twitch-ai-linux/venv/bin
+ExecStart=/home/%i/twitch-ai-linux/venv/bin/python /home/%i/twitch-ai-linux/main.py
+Restart=always
+RestartSec=5
+StartLimitInterval=0
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=twitch-ai
+KillMode=process
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
