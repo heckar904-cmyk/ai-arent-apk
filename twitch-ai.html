@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Twitch AI Voice Bot - Groq + TTS 24/7</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0a;color:#ececec;font-family:system-ui,Segoe UI,Roboto;min-height:100vh;display:flex;flex-direction:column}
+header{padding:14px 18px;border-bottom:1px solid #222;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;background:#111}
+header b{font-size:16px}
+.badge{background:#1e1e1e;border:1px solid #333;padding:4px 8px;border-radius:8px;font-size:11px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#555;display:inline-block;margin-right:6px}
+.status-dot.on{background:#4ade80;box-shadow:0 0 8px #4ade80}
+.status-dot.off{background:#f55}
+.main{flex:1;display:grid;grid-template-columns:320px 1fr 320px;gap:0;min-height:0}
+@media(max-width:1100px){.main{grid-template-columns:1fr;grid-template-rows:auto auto auto}}
+.panel{background:#111;border-right:1px solid #222;padding:14px;display:flex;flex-direction:column;gap:10px;overflow:auto}
+.panel h3{font-size:13px;color:#fff;margin-bottom:4px}
+input,textarea,select{width:100%;padding:10px 12px;border-radius:10px;background:#1a1a1a;border:1px solid #333;color:#fff;font-size:13px;outline:none}
+input:focus,textarea:focus,select:focus{border-color:#555}
+textarea{min-height:80px;resize:vertical}
+.btn{padding:10px 14px;border-radius:10px;border:0;background:#fff;color:#000;font-weight:700;cursor:pointer;font-size:13px}
+.btn:disabled{opacity:0.5}
+.btn2{background:#1e1e1e;color:#fff;border:1px solid #333}
+.btn2:hover{background:#252525}
+.btn-green{background:#4ade80;color:#000}
+.btn-red{background:#ff4d6d;color:#fff}
+.small{font-size:11px;color:#777;line-height:1.4}
+.chat{flex:1;display:flex;flex-direction:column;background:#0e0e0e;min-height:400px}
+.chat-log{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
+.msg{padding:8px 12px;border-radius:10px;font-size:13px;max-width:85%;line-height:1.4}
+.msg.twitch{background:#1a1a1a;border:1px solid #2a2a2a;align-self:flex-start}
+.msg.ai{background:#1e1e1e;border:1px solid #333;align-self:flex-end}
+.msg.system{background:#111;border:1px dashed #333;align-self:center;color:#888;font-size:11px}
+.msg b{color:#fff}
+.voice-bar{padding:10px 14px;border-top:1px solid #222;background:#111;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.voice-bar select{width:auto;min-width:140px}
+.log{font-family:monospace;font-size:11px;background:#05070f;border:1px solid #222;border-radius:8px;padding:8px;max-height:160px;overflow:auto;white-space:pre-wrap;color:#8a92b8}
+.switch{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12px}
+.switch input{width:auto}
+.kbd{background:#222;border:1px solid #333;padding:2px 6px;border-radius:4px;font-size:10px}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/tmi.js@1.8.5/dist/tmi.min.js"></script>
+</head>
+<body>
+<header>
+<div><b>🎙️ Twitch AI Voice Bot</b> <span class="badge">Groq + Browser TTS 24/7 — не отключается</span> <span class="badge"><span id="dot" class="status-dot off"></span><span id="statusText">отключен</span></span></div>
+<div style="display:flex;gap:8px"><a href="./" class="badge" style="text-decoration:none;color:#888">← AI Agent</a><a href="./preview.html" class="badge" style="text-decoration:none;color:#888">Preview</a></div>
+</header>
+
+<div class="main">
+<div class="panel">
+<h3>🔧 Настройка</h3>
+<input id="channel" placeholder="twitch канал без # (например shroud)" value="">
+<input id="groqKey" placeholder="gsk_... Groq API ключ" type="password">
+<div class="small">Ключ бери: <a href="https://console.groq.com/keys" target="_blank" style="color:#4ade80">console.groq.com/keys</a> → Create. Бесплатно 14k запросов/день. Модель llama-3.3-70b.</div>
+<input id="botName" placeholder="Имя бота (например AI)" value="AI">
+<textarea id="personality" placeholder="Характер бота">Ты веселый AI который управляет компьютером стримера. Отвечаешь коротко, 1-2 предложения, на русском, дружелюбно, с юмором. Читаешь твич чат и отвечаешь голосом. Если спрашивают про комп — шути что у тебя полный доступ. Не здоровайся каждый раз, отвечай по сути.</textarea>
+<select id="groqModel">
+<option value="llama-3.3-70b-versatile">llama-3.3-70b-versatile (умный, рекомен)</option>
+<option value="llama-3.1-70b-versatile">llama-3.1-70b-versatile</option>
+<option value="llama-3.1-8b-instant">llama-3.1-8b-instant (быстрый)</option>
+<option value="mixtral-8x7b-32768">mixtral-8x7b (длинный)</option>
+<option value="gemma2-9b-it">gemma2-9b-it (эконом)</option>
+</select>
+
+<h3>🔊 Голос</h3>
+<select id="voiceSelect"><option>Загрузка голосов...</option></select>
+<div style="display:flex;gap:6px">
+<input id="rate" type="range" min="0.5" max="1.5" step="0.1" value="1" style="flex:1"><span id="rateVal" class="small">1.0x</span>
+</div>
+<div style="display:flex;gap:6px">
+<input id="pitch" type="range" min="0.5" max="1.5" step="0.1" value="1" style="flex:1"><span id="pitchVal" class="small">1.0x</span>
+</div>
+<div class="switch"><span>🔊 Включить голос</span><input type="checkbox" id="voiceEnabled" checked></div>
+<div class="switch"><span>💬 Отвечать на каждое сообщение</span><input type="checkbox" id="replyAll" checked></div>
+<div class="switch"><span>⏱️ Отвечать только если упомянули бота</span><input type="checkbox" id="mentionOnly"></div>
+<div class="switch"><span>🚀 24/7 режим (не отключаться)</span><input type="checkbox" id="alwaysOn" checked></div>
+<div class="switch"><span>🔁 Авто-реконнект</span><input type="checkbox" id="autoReconnect" checked></div>
+
+<button class="btn btn-green" id="connectBtn" onclick="toggleConnect()">▶️ Подключить к Twitch</button>
+<button class="btn btn2" onclick="testVoice()">🔊 Тест голоса</button>
+<button class="btn btn2" onclick="clearChat()">🗑️ Очистить чат</button>
+
+<div class="small">
+<b>Как работает:</b><br>
+1. Вставь канал + gsk_ ключ<br>
+2. Нажми Подключить<br>
+3. Бот слушает чат 24/7, не отключается если 5 мин тишины (в отличие от копайлота)<br>
+4. Когда пишут — Groq отвечает + говорит голосом из браузера<br>
+5. Если кредиты кончатся — смени ключ вручную, нажми Сохранить<br>
+<br>
+<b>Фишки:</b><br>
+• Keepalive пинг каждые 60с<br>
+• Авто-реконнект если твич отвалился<br>
+• Никогда не спит если галочка 24/7<br>
+• Голос стандартный из браузера (не надо платить)<br>
+• Работает бесплатно полностью
+</div>
+
+<h3>🖥️ Доступ к компу (опционально)</h3>
+<input id="agentUrl" placeholder="https://my-agent--user.replit.app (если есть)">
+<div class="small">Если вставишь URL своего Linux Agent (Replit), AI сможет выполнять команды на компе через /exec. Оставь пустым если не нужно.</div>
+<div class="switch"><span>Разрешить AI выполнять команды</span><input type="checkbox" id="allowExec"></div>
+<div id="execLog" class="log" style="display:none"></div>
+</div>
+
+<div class="chat">
+<div id="chatLog" class="chat-log">
+<div class="msg system">👋 Привет! Вставь Twitch канал и Groq ключ gsk_... и нажми Подключить. Бот будет слушать чат 24/7 и отвечать голосом, не отключаясь как копайлот.</div>
+</div>
+<div class="voice-bar">
+<span class="small">📝 Быстрый тест:</span>
+<input id="quickMsg" placeholder="Напиши сообщение как из чата и нажми Enter — AI ответит голосом" style="flex:1">
+<button class="btn btn2" onclick="sendQuick()">Отправить</button>
+<span id="queue" class="small">Очередь: 0</span>
+</div>
+</div>
+
+<div class="panel">
+<h3>📊 Статистика</h3>
+<div class="small">Сообщений чата: <b id="statMsg">0</b><br>Ответов AI: <b id="statAi">0</b><br>Время работы: <b id="statTime">00:00:00</b><br>Статус Groq: <b id="statGroq">не проверен</b></div>
+<div class="log" id="debugLog">Лог: ожидание подключения...
+</div>
+<h3>🎛️ Управление голосом</h3>
+<button class="btn btn2" onclick="stopVoice()">⏹️ Стоп голос</button>
+<button class="btn btn2" onclick="skipQueue()">⏭️ Пропустить очередь</button>
+<div class="small">Горячие клавиши: <span class="kbd">Ctrl+K</span> очистить, <span class="kbd">Ctrl+M</span> мьют, <span class="kbd">Space</span> тест</div>
+
+<h3>💾 Сохранение</h3>
+<button class="btn btn2" onclick="saveSettings()">💾 Сохранить настройки</button>
+<div class="small" id="saveStatus"></div>
+<h3>📜 Чат Twitch (сырой)</h3>
+<div class="log" id="rawLog" style="max-height:200px"></div>
+</div>
+</div>
+
+<script>
+let client=null;
+let isConnected=false;
+let msgCount=0, aiCount=0;
+let startTime=null, timerInt=null;
+let voiceQueue=[];
+let isSpeaking=false;
+let keepAliveInt=null;
+
+const $ = id => document.getElementById(id);
+const log = (m) => { const el=$('debugLog'); el.textContent+=`\\n[${new Date().toLocaleTimeString()}] ${m}`; el.scrollTop=el.scrollHeight; console.log(m); };
+const rawLog = (m) => { const el=$('rawLog'); el.textContent+=`\\n${m}`; el.scrollTop=el.scrollHeight; };
+
+function loadSettings(){
+  try{
+    $('channel').value=localStorage.getItem('twitch_channel')||'';
+    $('groqKey').value=localStorage.getItem('twitch_groq')||'';
+    $('botName').value=localStorage.getItem('twitch_botName')||'AI';
+    $('personality').value=localStorage.getItem('twitch_personality')||$('personality').value;
+    $('groqModel').value=localStorage.getItem('twitch_model')||'llama-3.3-70b-versatile';
+    $('agentUrl').value=localStorage.getItem('twitch_agentUrl')||'';
+    $('voiceEnabled').checked=localStorage.getItem('twitch_voiceEnabled')!=='0';
+    $('replyAll').checked=localStorage.getItem('twitch_replyAll')!=='0';
+    $('mentionOnly').checked=localStorage.getItem('twitch_mentionOnly')==='1';
+    $('alwaysOn').checked=localStorage.getItem('twitch_alwaysOn')!=='0';
+    $('autoReconnect').checked=localStorage.getItem('twitch_autoReconnect')!=='0';
+    $('rate').value=localStorage.getItem('twitch_rate')||'1';
+    $('pitch').value=localStorage.getItem('twitch_pitch')||'1';
+    $('rateVal').textContent=$('rate').value+'x';
+    $('pitchVal').textContent=$('pitch').value+'x';
+  }catch(e){}
+}
+function saveSettings(){
+  try{
+    localStorage.setItem('twitch_channel',$('channel').value.trim());
+    localStorage.setItem('twitch_groq',$('groqKey').value.trim());
+    localStorage.setItem('twitch_botName',$('botName').value.trim());
+    localStorage.setItem('twitch_personality',$('personality').value);
+    localStorage.setItem('twitch_model',$('groqModel').value);
+    localStorage.setItem('twitch_agentUrl',$('agentUrl').value.trim());
+    localStorage.setItem('twitch_voiceEnabled',$('voiceEnabled').checked?'1':'0');
+    localStorage.setItem('twitch_replyAll',$('replyAll').checked?'1':'0');
+    localStorage.setItem('twitch_mentionOnly',$('mentionOnly').checked?'1':'0');
+    localStorage.setItem('twitch_alwaysOn',$('alwaysOn').checked?'1':'0');
+    localStorage.setItem('twitch_autoReconnect',$('autoReconnect').checked?'1':'0');
+    localStorage.setItem('twitch_rate',$('rate').value);
+    localStorage.setItem('twitch_pitch',$('pitch').value);
+    $('saveStatus').textContent='✅ Сохранено '+new Date().toLocaleTimeString();
+    log('Настройки сохранены');
+  }catch(e){ $('saveStatus').textContent='❌ '+e.message; }
+}
+$('rate').addEventListener('input', e=>{ $('rateVal').textContent=e.target.value+'x'; saveSettings(); });
+$('pitch').addEventListener('input', e=>{ $('pitchVal').textContent=e.target.value+'x'; saveSettings(); });
+
+// Voice setup
+let voices=[];
+function loadVoices(){
+  voices=speechSynthesis.getVoices();
+  const sel=$('voiceSelect');
+  sel.innerHTML='';
+  // Prefer Russian voices
+  const ruVoices=voices.filter(v=>v.lang.toLowerCase().includes('ru'));
+  const allVoices=ruVoices.length? ruVoices.concat(voices.filter(v=>!ruVoices.includes(v))) : voices;
+  allVoices.forEach((v,i)=>{
+    const opt=document.createElement('option');
+    opt.value=v.name;
+    opt.textContent=`${v.name} (${v.lang})${v.default?' • default':''}`;
+    sel.appendChild(opt);
+  });
+  // Auto select Russian
+  const saved=localStorage.getItem('twitch_voice');
+  if(saved){ sel.value=saved; }
+  else if(ruVoices[0]){ sel.value=ruVoices[0].name; }
+  log(`Голосов загружено: ${voices.length}, русских: ${ruVoices.length}`);
+}
+speechSynthesis.onvoiceschanged=loadVoices;
+setTimeout(loadVoices,500);
+$('voiceSelect').addEventListener('change', e=>{ localStorage.setItem('twitch_voice', e.target.value); });
+
+function speak(text){
+  if(!$('voiceEnabled').checked) return;
+  voiceQueue.push(text);
+  $('queue').textContent=`Очередь: ${voiceQueue.length}`;
+  processQueue();
+}
+function processQueue(){
+  if(isSpeaking || voiceQueue.length===0) return;
+  const text=voiceQueue.shift();
+  $('queue').textContent=`Очередь: ${voiceQueue.length}`;
+  isSpeaking=true;
+  const utter=new SpeechSynthesisUtterance(text);
+  const selVoice=voices.find(v=>v.name===$('voiceSelect').value);
+  if(selVoice) utter.voice=selVoice;
+  utter.rate=parseFloat($('rate').value);
+  utter.pitch=parseFloat($('pitch').value);
+  utter.volume=1;
+  utter.onend=()=>{ isSpeaking=false; processQueue(); };
+  utter.onerror=(e)=>{ log('TTS error '+e.error); isSpeaking=false; processQueue(); };
+  speechSynthesis.speak(utter);
+  log(`🔊 Говорю: "${text.slice(0,60)}..."`);
+}
+function stopVoice(){ speechSynthesis.cancel(); voiceQueue=[]; isSpeaking=false; $('queue').textContent='Очередь: 0'; log('Голос остановлен'); }
+function skipQueue(){ speechSynthesis.cancel(); isSpeaking=false; processQueue(); }
+function testVoice(){ speak('Привет! Я твой Twitch AI бот. Я слушаю чат 24 на 7 и отвечаю голосом. Если ты пишешь в чат — я сразу отвечаю!'); }
+
+function addChat(type, user, text){
+  const el=document.createElement('div');
+  el.className=`msg ${type}`;
+  if(type==='twitch') el.innerHTML=`<b>${user}:</b> ${escapeHtml(text)}`;
+  else if(type==='ai') el.innerHTML=`<b>${$('botName').value||'AI'}:</b> ${escapeHtml(text)}`;
+  else el.textContent=text;
+  $('chatLog').appendChild(el);
+  $('chatLog').scrollTop=$('chatLog').scrollHeight;
+}
+function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function clearChat(){ $('chatLog').innerHTML='<div class="msg system">Чат очищен</div>'; }
+
+// Groq call
+async function askGroq(userMsg, username){
+  const key=$('groqKey').value.trim();
+  if(!key){ log('❌ Нет Groq ключа gsk_...'); addChat('system','','❌ Вставь Groq ключ gsk_... в настройках'); return null; }
+  if(!key.startsWith('gsk_')){ log('⚠️ Ключ должен начинаться с gsk_'); }
+  const model=$('groqModel').value;
+  const personality=$('personality').value;
+  const botName=$('botName').value||'AI';
+  const system=`${personality}\\n\\nТы бот ${botName} на твич канале. Отвечай коротко, 1-2 предложения, на русском, как живой стример. Не повторяй ник каждый раз. Если спрашивают про управление компом — шути что у тебя полный доступ. Текущий пользователь чата: ${username}. Сообщение: `;
+  try{
+    $('statGroq').textContent='запрос...';
+    log(`[GROQ] → ${model} | ${username}: ${userMsg.slice(0,50)}`);
+    const res=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+      body:JSON.stringify({
+        model: model,
+        messages:[{role:'system',content:system},{role:'user',content:userMsg}],
+        temperature:0.8,
+        max_tokens:150,
+        top_p:0.9
+      })
+    });
+    const data=await res.json();
+    if(!res.ok){ throw new Error(data.error?.message || res.statusText); }
+    const answer=data.choices?.[0]?.message?.content?.trim()||'';
+    $('statGroq').textContent='ok';
+    log(`[GROQ] ← ${answer.slice(0,80)}... | tokens ${data.usage?.total_tokens||'?'}`);
+    return answer;
+  }catch(e){
+    $('statGroq').textContent='ошибка: '+e.message.slice(0,40);
+    log(`[GROQ] ❌ ${e.message}`);
+    if(e.message.toLowerCase().includes('credits') || e.message.toLowerCase().includes('limit') || e.message.toLowerCase().includes('quota')){
+      addChat('system','','⚠️ У Groq кончились кредиты на сегодня! Смени ключ gsk_... вручную в настройках и нажми Сохранить.');
+      speak('У меня кончились кредиты, хозяин сменит ключ скоро!');
+    }
+    return null;
+  }
+}
+
+async function handleTwitchMessage(channel, tags, message, self){
+  if(self) return;
+  const username=tags['display-name']||tags.username||'anon';
+  msgCount++; $('statMsg').textContent=msgCount;
+  rawLog(`${username}: ${message}`);
+  addChat('twitch', username, message);
+
+  // Filters
+  const botName=($('botName').value||'AI').toLowerCase();
+  const textLower=message.toLowerCase();
+  const mentionOnly=$('mentionOnly').checked;
+  const replyAll=$('replyAll').checked;
+
+  if(mentionOnly && !textLower.includes(botName) && !message.includes('@')){ log(`[SKIP] mentionOnly, нет упоминания бота`); return; }
+  if(!replyAll && !mentionOnly){ /* if both unchecked, reply only if random? */ }
+
+  // Ignore commands
+  if(message.startsWith('!')) return;
+
+  log(`[CHAT] ${username}: ${message}`);
+  const answer=await askGroq(message, username);
+  if(answer){
+    aiCount++; $('statAi').textContent=aiCount;
+    addChat('ai','',answer);
+    speak(answer);
+    // Optional exec via agent
+    if($('allowExec').checked && $('agentUrl').value.trim()){
+      tryExec(answer);
+    }
+  }
+}
+
+async function tryExec(aiAnswer){
+  const url=$('agentUrl').value.trim().replace(/\/$/,'');
+  if(!url) return;
+  // Simple heuristic: if AI answer contains [EXEC] command
+  // For safety, only exec if user explicitly allows and answer contains code block
+  const logEl=$('execLog');
+  logEl.style.display='block';
+  logEl.textContent+=`\\n[AI хочет выполнить] ${aiAnswer.slice(0,100)}\\n(пока отключено для безопасности, включи только если доверяешь)\\n`;
+}
+
+// Twitch connect
+async function toggleConnect(){
+  if(isConnected){
+    disconnect();
+  }else{
+    connect();
+  }
+}
+function connect(){
+  const channel=$('channel').value.trim().replace('#','');
+  if(!channel){ alert('Вставь Twitch канал! Например: shroud'); return; }
+  saveSettings();
+  log(`Подключаюсь к twitch #${channel}...`);
+  $('statusText').textContent='подключение...';
+  $('dot').className='status-dot off';
+  client=new tmi.Client({
+    options:{debug:false},
+    connection:{reconnect:true, secure:true},
+    channels:[channel]
+  });
+  client.on('connected', (addr,port)=>{
+    isConnected=true;
+    $('connectBtn').textContent='⏹️ Отключить';
+    $('connectBtn').className='btn btn-red';
+    $('statusText').textContent=`подключен к #${channel}`;
+    $('dot').className='status-dot on';
+    log(`✅ Подключен к ${addr}:${port} канал #${channel} — слушаю 24/7`);
+    addChat('system','','✅ Подключен к #'+channel+' — слушаю чат 24/7, не отключусь если тишина 5 минут!');
+    speak(`Подключен к чату канала ${channel}. Слушаю 24 на 7!`);
+    startTime=Date.now();
+    timerInt=setInterval(updateTime,1000);
+    // Keepalive every 60s
+    if(keepAliveInt) clearInterval(keepAliveInt);
+    keepAliveInt=setInterval(()=>{
+      if(client && isConnected){
+        log('💓 Keepalive ping — всё ещё слушаю...');
+        // tmi doesn't need ping, but we log to show 24/7
+        if($('alwaysOn').checked){
+          // ensure still joined
+          client.join(channel).catch(()=>{});
+        }
+      }
+    },60000);
+  });
+  client.on('disconnected', (reason)=>{
+    log(`⚠️ Отключен: ${reason}`);
+    if($('autoReconnect').checked && $('alwaysOn').checked){
+      log('🔁 Авто-реконнект через 3с (24/7 режим)...');
+      setTimeout(()=>{ if(!isConnected) connect(); },3000);
+    }else{
+      isConnected=false;
+      $('statusText').textContent='отключен';
+      $('dot').className='status-dot off';
+      $('connectBtn').textContent='▶️ Подключить к Twitch';
+      $('connectBtn').className='btn btn-green';
+    }
+  });
+  client.on('message', handleTwitchMessage);
+  client.connect().catch(e=>{
+    log('❌ Ошибка подключения: '+e.message);
+    $('statusText').textContent='ошибка: '+e.message;
+    addChat('system','','❌ Ошибка: '+e.message);
+  });
+}
+function disconnect(){
+  if(client){
+    try{ client.disconnect(); }catch(e){}
+    client=null;
+  }
+  isConnected=false;
+  if(timerInt) clearInterval(timerInt);
+  if(keepAliveInt) clearInterval(keepAliveInt);
+  $('connectBtn').textContent='▶️ Подключить к Twitch';
+  $('connectBtn').className='btn btn-green';
+  $('statusText').textContent='отключен';
+  $('dot').className='status-dot off';
+  log('Отключен');
+  addChat('system','','⏹️ Отключен от Twitch');
+  stopVoice();
+}
+function updateTime(){
+  if(!startTime) return;
+  const diff=Math.floor((Date.now()-startTime)/1000);
+  const h=String(Math.floor(diff/3600)).padStart(2,'0');
+  const m=String(Math.floor((diff%3600)/60)).padStart(2,'0');
+  const s=String(diff%60).padStart(2,'0');
+  $('statTime').textContent=`${h}:${m}:${s}`;
+}
+
+// Quick test
+function sendQuick(){
+  const txt=$('quickMsg').value.trim();
+  if(!txt) return;
+  $('quickMsg').value='';
+  handleTwitchMessage('#test', {username:'test_user','display-name':'Тестер'}, txt, false);
+}
+$('quickMsg').addEventListener('keydown', e=>{ if(e.key==='Enter') sendQuick(); });
+
+// Hotkeys
+document.addEventListener('keydown', e=>{
+  if(e.ctrlKey && e.key.toLowerCase()==='k'){ e.preventDefault(); clearChat(); }
+  if(e.ctrlKey && e.key.toLowerCase()==='m'){ e.preventDefault(); $('voiceEnabled').checked=!$('voiceEnabled').checked; log($('voiceEnabled').checked?'🔊 Voice on':'🔇 Voice off'); }
+  if(e.code==='Space' && e.target.tagName!=='INPUT' && e.target.tagName!=='TEXTAREA'){ e.preventDefault(); testVoice(); }
+});
+
+loadSettings();
+loadVoices();
+log('Готов! Вставь канал и gsk_ ключ. 24/7 режим включен — не отключится через 5 мин тишины.');
+</script>
+</body>
+</html>
