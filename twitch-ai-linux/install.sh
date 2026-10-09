@@ -1,65 +1,61 @@
 #!/bin/bash
-# Twitch AI Voice Bot — установка на Linux (Ubuntu/Debian/Mint/Arch)
-# Запуск: chmod +x install.sh && ./install.sh
-
 set -e
+echo "🎙️ Twitch AI v3 — РЕАЛЬНЫЙ контроль Linux — установка"
+echo "====================================================="
 
-echo "🎙️ Twitch AI Voice Bot — установка для Linux"
-echo "=============================================="
-
-# Определяем дистрибутив
 if [ -f /etc/debian_version ]; then
-  echo "📦 Debian/Ubuntu обнаружен — ставлю espeak, ffmpeg, python3-venv"
+  echo "📦 Debian/Ubuntu — ставлю зависимости для реального контроля"
   sudo apt update
-  sudo apt install -y python3 python3-pip python3-venv espeak espeak-data libespeak1 ffmpeg alsa-utils pulseaudio
+  sudo apt install -y python3 python3-pip python3-venv espeak espeak-data libespeak1 ffmpeg alsa-utils pulseaudio scrot wmctrl xdotool yandex-browser || echo "yandex-browser не найден, будет firefox"
+  # Для скриншотов и мышки
+  sudo apt install -y python3-tk python3-dev scrot
 elif [ -f /etc/arch-release ]; then
-  echo "📦 Arch обнаружен"
-  sudo pacman -S --noconfirm python python-pip espeak ffmpeg
+  sudo pacman -S --noconfirm python python-pip espeak ffmpeg scrot wmctrl xdotool
 else
-  echo "⚠️ Неизвестный дистр, пробую ставить через pip, но espeak поставь вручную: sudo apt install espeak ffmpeg"
+  echo "⚠️ Поставь вручную: espeak ffmpeg scrot wmctrl xdotool"
 fi
 
-echo ""
-echo "🐍 Создаю venv..."
+echo "🐍 venv..."
 python3 -m venv venv
 source venv/bin/activate
-
-echo "📥 Ставлю зависимости..."
 pip install --upgrade pip
 pip install -r requirements.txt
 
-echo ""
-echo "⚙️ Настройка конфига..."
 if [ ! -f config.json ]; then
   cp config.json.example config.json
-  echo "✅ Создан config.json из примера"
+  echo "✅ Создан config.json — отредактируй!"
 else
-  echo "ℹ️ config.json уже есть, не трогаю"
+  echo "ℹ️ config.json уже есть"
 fi
 
-echo ""
-echo "🔊 Тестирую голос..."
-python3 -c "import pyttsx3; e=pyttsx3.init(); e.say('Привет! Я твой Twitch AI бот на линуксе, готов слушать чат 24 на 7'); e.runAndWait()" || echo "⚠️ Голос не сработал, проверь espeak: espeak 'test'"
+# Создаем пустые файлы памяти
+touch memory.jsonl thoughts.txt
+echo "🧠 Созданы memory.jsonl (память) и thoughts.txt (мысли)"
 
 echo ""
-echo "✅ Установка готова!"
+echo "🔊 Тест голоса..."
+python3 -c "import pyttsx3; e=pyttsx3.init(); e.say('Привет! Я AI v3 с реальным контролем линукса'); e.runAndWait()" || echo "⚠️ Голос: espeak test"
+
+echo ""
+echo "📸 Тест скрина..."
+python3 -c "import mss; print('mss ok')" || echo "⚠️ mss не работает"
+
+echo ""
+echo "✅ v3 готово! Что нового:"
+echo "- Реальный контроль: команды, скрин, браузер"
+echo "- Память в memory.jsonl — помнит вчера/позавчера даже после переустановки"
+echo "- Мысли в thoughts.txt"
+echo "- Характеристики системы в system_info.json"
+echo "- Оверлей с сообщением если ключ истек"
+echo "- Понимает кто главный в чате (broadcaster)"
+echo "- Правила: no 112 (шутит), no 18+, no вирусы"
 echo ""
 echo "👉 Дальше:"
-echo "1. Получи токены:"
-echo "   - Twitch: https://twitchtokengenerator.com → Bot Chat Token → скопируй oauth:... "
-echo "   - Groq: https://console.groq.com/keys → Create API Key → gsk_..."
-echo "2. Отредактируй config.json:"
-echo "   nano config.json"
-echo "   Вставь: twitch_channel, twitch_token, groq_api_key"
-echo "3. Запусти:"
-echo "   source venv/bin/activate"
-echo "   python3 main.py"
+echo "1. nano config.json — вставь twitch_channel, oauth:токен, gsk_..."
+echo "   Вставь только channel, token, groq_api_key — остальное уже настроено!"
+echo "   write_to_chat=false — только голос + оверлей как ты хотел"
+echo "2. source venv/bin/activate && python3 main.py"
+echo "3. В OBS: Browser Source -> http://localhost:8080/overlay.html (900x250)"
+echo "4. 24/7: sudo cp twitch-ai.service /etc/systemd/system/ && sudo systemctl enable --now twitch-ai"
 echo ""
-echo "4. Для 24/7 (чтобы не отваливался после 5 мин тишины как копайлот):"
-echo "   sudo cp twitch-ai.service /etc/systemd/system/"
-echo "   sudo systemctl daemon-reload"
-echo "   sudo systemctl enable --now twitch-ai"
-echo "   sudo systemctl status twitch-ai"
-echo "   journalctl -u twitch-ai -f (логи)"
-echo ""
-echo "Готово! Бот будет слушать чат постоянно и отвечать голосом."
+echo "Удаление: sudo systemctl stop twitch-ai; rm -rf ~/twitch-ai-linux-v3"
