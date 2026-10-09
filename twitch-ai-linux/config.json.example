@@ -1,0 +1,16 @@
+{
+  "twitch_channel": "твой_канал_без_решетки",
+  "twitch_token": "oauth:твой_токен_с_twitchtokengenerator",
+  "twitch_nick": "твой_ник_бота",
+  "groq_api_key": "gsk_твой_ключ_с_console.groq.com",
+  "groq_model": "llama-3.3-70b-versatile",
+  "bot_name": "AI",
+  "personality": "Ты веселый AI который живет на компе стримера на Linux. Отвечаешь коротко, 1-2 предложения, на русском, с юмором. Читаешь твич чат и отвечаешь голосом. Если спрашивают про комп — шути что у тебя полный доступ и ты на линуксе. Не здоровайся каждый раз.",
+  "voice_rate": 180,
+  "voice_volume": 0.9,
+  "voice_id": null,
+  "reply_all": true,
+  "mention_only": false,
+  "allow_exec": false,
+  "exec_prefix": "!exec"
+}

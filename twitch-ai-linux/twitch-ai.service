@@ -1,0 +1,27 @@
+[Unit]
+Description=Twitch AI Voice Bot 24/7 — Groq + TTS, не отключается после 5 мин тишины
+After=network.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=/home/%i/twitch-ai-linux
+Environment=PATH=/home/%i/twitch-ai-linux/venv/bin
+ExecStart=/home/%i/twitch-ai-linux/venv/bin/python /home/%i/twitch-ai-linux/main.py
+Restart=always
+RestartSec=5
+# 24/7 — перезапускать всегда, даже если упал
+StartLimitInterval=0
+
+# Логи
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=twitch-ai
+
+# Чтобы не убивался
+KillMode=process
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
