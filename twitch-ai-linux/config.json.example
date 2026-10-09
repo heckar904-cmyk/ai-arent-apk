@@ -1,7 +1,6 @@
 {
   "twitch_channel": "твой_канал_без_решетки",
   "twitch_token": "oauth:твой_токен_с_twitchtokengenerator",
-  "twitch_nick": "твой_ник_бота",
   "groq_api_key": "gsk_твой_ключ_с_console.groq.com",
   "groq_model": "llama-3.3-70b-versatile",
   "bot_name": "AI",
@@ -11,6 +10,8 @@
   "voice_id": null,
   "reply_all": true,
   "mention_only": false,
-  "allow_exec": false,
-  "exec_prefix": "!exec"
+  "write_to_chat": false,
+  "show_overlay": true,
+  "overlay_port": 8080,
+  "allow_exec": false
 }

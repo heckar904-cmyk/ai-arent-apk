@@ -216,16 +216,84 @@ class Bot(commands.Bot):
         answer = await ask_groq(content, username)
         if answer:
             self.ai_count += 1
-            try:
-                await message.channel.send(f"{answer}")
-            except Exception as e:
-                print(f"Не смог отправить в чат: {e}")
+            # Только говорить, не писать в чат (по желанию юзера)
+            if CONFIG.get("write_to_chat", False):
+                try:
+                    await message.channel.send(f"{answer}")
+                except Exception as e:
+                    print(f"Не смог отправить в чат: {e}")
+            else:
+                print(f"[NO CHAT WRITE] Только голос + оверлей, в чат не пишу (write_to_chat=false)")
+            
+            # Обновить оверлей для OBS
+            if CONFIG.get("show_overlay", True):
+                try:
+                    update_overlay(username, content, answer)
+                except Exception as e:
+                    print(f"Overlay error: {e}")
+            
             speak_async(answer)
 
     async def event_command_error(self, ctx, error):
         print(f"Command error: {error}")
 
 start_time = time.time()
+latest_overlay = {"user": "", "question": "", "answer": "", "time": ""}
+
+def update_overlay(user, question, answer):
+    global latest_overlay
+    latest_overlay = {
+        "user": user,
+        "question": question,
+        "answer": answer,
+        "time": time.strftime("%H:%M:%S")
+    }
+    # Сохраняем в файл для оверлея
+    try:
+        overlay_path = Path(__file__).parent / "overlay_data.json"
+        with open(overlay_path, "w", encoding="utf-8") as f:
+            json.dump(latest_overlay, f, ensure_ascii=False)
+    except Exception as e:
+        print(f"Overlay save fail: {e}")
+
+async def overlay_server():
+    """HTTP сервер для OBS оверлея — показывает текст на стриме"""
+    from aiohttp import web
+    import pathlib
+    
+    async def handle_overlay(request):
+        html_path = pathlib.Path(__file__).parent / "overlay.html"
+        if not html_path.exists():
+            return web.Response(text="overlay.html не найден", status=404)
+        return web.FileResponse(html_path)
+    
+    async def handle_data(request):
+        return web.json_response(latest_overlay)
+    
+    async def handle_root(request):
+        return web.Response(text=f"Twitch AI Overlay running. OBS Browser Source: http://localhost:{CONFIG.get('overlay_port',8080)}/overlay.html | Data: /api/data", content_type="text/plain")
+    
+    app = web.Application()
+    app.router.add_get('/', handle_root)
+    app.router.add_get('/overlay.html', handle_overlay)
+    app.router.add_get('/api/data', handle_data)
+    app.router.add_get('/overlay_data.json', handle_data)
+    
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = CONFIG.get("overlay_port", 8080)
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    try:
+        await site.start()
+        print(f"🖥️ Оверлей для OBS запущен: http://localhost:{port}/overlay.html")
+        print(f"   Добавь в OBS как Browser Source → URL: http://localhost:{port}/overlay.html")
+        print(f"   Размер: 800x200, прозрачный фон")
+    except Exception as e:
+        print(f"Overlay server fail (порт {port} занят?): {e}")
+
+    # Keep running
+    while True:
+        await asyncio.sleep(3600)
 
 async def main():
     # Проверка конфига
@@ -241,6 +309,10 @@ async def main():
 
     # Запускаем speaker worker
     asyncio.create_task(speaker_worker())
+    
+    # Запускаем оверлей сервер для OBS если включен
+    if CONFIG.get("show_overlay", True):
+        asyncio.create_task(overlay_server())
 
     bot = Bot()
     # Бесконечный цикл с реконнектом — 24/7
